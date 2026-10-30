@@ -45,13 +45,25 @@ Example: A learner may read a published HTML lesson and save their progress, but
 
 ### 4.2 Authentication provider
 
-**Decision: Open.**
+**Decision: Approved — Custom email/password authentication.**
 
-Select the authentication provider after confirming the mobile/web platform, backend architecture and deployment requirements.
+ZELO's backend manages email/password registration, authentication, and session lifecycle.
 
-Prefer an established provider or framework integration. Avoid implementing custom password storage, token rotation or recovery mechanisms unless there is a clear requirement.
+The implementation must use the approved session policy:
 
-The interface should be provider-independent where practical so authentication implementation details do not spread throughout the application.
+* Access tokens expire after 15 minutes.
+* Refresh sessions expire after 30 days.
+* Refresh-token rotation must be secure and prevent reuse of invalidated refresh tokens.
+* Logging out revokes the current refresh session.
+* Mobile credentials are stored through Expo SecureStore.
+* Server-side refresh-token storage uses hashes rather than plaintext.
+* Email verification is optional for the initial MVP.
+* Password recovery uses time-limited, single-use tokens.
+
+Passwords must be hashed using a modern password-hashing algorithm. Passwords and authentication tokens must never be logged or returned in inappropriate API responses.
+
+Token format, signing-key management, rotation mechanics, and rate-limit thresholds must be defined in the implementation before production release.
+
 
 ## 5. Session and Credential Security
 
@@ -60,13 +72,16 @@ The interface should be provider-independent where practical so authentication i
 A session must support:
 
 1. Secure creation after successful authentication.
-2. Expiration according to the configured policy.
-3. Validation on protected requests.
-4. Renewal only through an approved, secure mechanism.
-5. Invalidation or revocation on sign-out where supported.
-6. Clear handling of expired sessions without losing unrelated unsaved work unnecessarily.
+2. Access-token expiration after 15 minutes.
+3. Refresh-session expiration after 30 days.
+4. Authentication validation on protected requests.
+5. Secure refresh-token rotation during session renewal.
+6. Rejection of invalidated refresh tokens to prevent token reuse.
+7. Revocation of the current refresh session on sign-out.
+8. Clear handling of expired or revoked sessions without losing unrelated unsaved work unnecessarily.
 
-Exact access-token and refresh-token lifetimes depend on the selected provider and platform.
+The backend is responsible for enforcing token expiration, refresh-token rotation, and session revocation. The mobile client must not be trusted to enforce these security requirements independently.
+
 
 ### 5.2 Credential handling
 

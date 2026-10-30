@@ -125,28 +125,36 @@ All technical decisions must follow these principles:
 
 **Status:** Proposed.
 
-### TD-05 — Authentication Provider
+### TD-05 — Authentication Provider and Session Strategy
 
-**Context:** Accounts require registration, login, sessions, protected endpoints, and secure account management.
+**Status:** Approved
 
-**Options:**
+**Decision:** ZELO 2.0 MVP will use custom email/password authentication implemented in the ZELO backend.
 
-* Managed authentication provider.
-* Framework-integrated authentication.
-* Custom authentication implementation.
+**Session policy:**
 
-**Proposed default — not approved:** Prefer a maintained solution with secure session handling over writing authentication infrastructure from scratch.
+* Access-token lifetime: 15 minutes.
+* Refresh-session lifetime: 30 days.
+* Refresh tokens must rotate securely when sessions are renewed.
+* Logout must revoke the current refresh session.
+* Mobile credentials must be stored using Expo SecureStore.
+* Refresh tokens must be stored as hashes on the server, not as plaintext.
+* Passwords must be stored using a modern password-hashing algorithm.
+* Email verification is optional for the initial MVP.
+* Password recovery must use time-limited, single-use tokens.
+* Registration, login, and password recovery must have server-side rate limiting.
 
-**Evaluation criteria:**
+**Security requirements:**
 
-* Platform compatibility.
-* Session and token security.
-* Password recovery.
-* Account deletion.
-* Integration complexity.
-* Cost and deployment constraints.
+* Authentication and authorization must be enforced by the backend.
+* Protected endpoints must derive the current user from the validated authentication context.
+* Secrets and credentials must never appear in logs or client responses.
+* Authentication failures must use consistent, safe error responses.
 
-**Status:** Proposed.
+**Rationale:** Custom email/password authentication supports the approved MVP account flows and the existing ZELO backend architecture. Security-sensitive behavior must remain server-controlled.
+
+**Implementation note:** Access-token format, signing-key management, refresh-token rotation details, and exact rate-limit thresholds must be specified in the authentication implementation before they are relied upon in production.
+
 
 ### TD-06 — Lesson Content Storage
 

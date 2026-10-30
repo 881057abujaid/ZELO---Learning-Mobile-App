@@ -546,15 +546,14 @@ Before release, automated tests must verify:
 
 The following remain open:
 
-1. Authentication provider and session strategy.
-2. Whether activity attempts are persisted individually.
-3. Whether code evaluation is synchronous or asynchronous for each challenge mode.
-4. How preview output is delivered safely to the client.
-5. Whether progress is saved per step or in batches.
-6. Exact pagination conventions where required.
-7. The final error-code catalogue.
-8. The content-version compatibility policy.
-9. The deployment architecture and API origin configuration.
+1. Whether activity attempts are persisted individually.
+2. Whether code evaluation is synchronous or asynchronous for each challenge mode.
+3. How preview output is delivered safely to the client.
+4. Whether progress is saved per step or in batches.
+5. Exact pagination conventions where required.
+6. The final error-code catalogue.
+7. The content-version compatibility policy.
+8. The deployment architecture and API origin configuration.
 
 ---
 
