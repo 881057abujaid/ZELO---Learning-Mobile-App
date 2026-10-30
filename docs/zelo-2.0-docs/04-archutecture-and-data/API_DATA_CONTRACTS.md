@@ -117,15 +117,17 @@ Endpoints must use these codes consistently. A coding challenge's learner soluti
 
 ## 5. Authentication Contracts
 
-The final authentication provider and session mechanism remain open.
+ZELO 2.0 MVP uses custom email/password authentication implemented in the ZELO backend, as approved in TD-05 and AUTH_SECURITY_SPEC.md.
+
+The backend manages credential validation, access tokens, refresh sessions, session revocation, and authentication lifecycle according to the approved authentication security specification.
 
 ### Proposed endpoints
 
 | Method | Endpoint         | Purpose                                                 |
 | ------ | ---------------- | ------------------------------------------------------- |
-| `POST` | `/auth/register` | Create an account, if password registration is selected |
-| `POST` | `/auth/login`    | Start a session, if credential login is selected        |
-| `POST` | `/auth/logout`   | End the current session                                 |
+| `POST` | `/auth/register` | Register an account using email and password |
+| `POST` | `/auth/login`    | Authenticate credentials and establish a session      |
+| `POST` | `/auth/logout`   | Revoke the current refresh session                                 |
 | `GET`  | `/users/me`      | Retrieve the authenticated user's profile               |
 
 ### Contract requirements
@@ -137,7 +139,8 @@ The final authentication provider and session mechanism remain open.
 * Authentication errors must be handled consistently.
 * Session renewal, recovery, and deletion flows must follow the approved security specification.
 
-Exact request fields depend on the authentication decision.
+Request and response fields must follow the approved authentication
+security specification and the endpoint-specific contracts.
 
 ## 6. Curriculum Contracts
 
