@@ -75,7 +75,17 @@ The backend must support:
   <text color="secondary" size="sm" textAlign="center">Coding execution may use a separate isolated runner. It must not run arbitrary learner code inside the trusted API process.</text>
 </box>
 
-This is a logical architecture. Exact frameworks, deployment and database configuration remain open until the technical stack is formally approved.
+This is the approved logical architecture for ZELO 2.0 MVP.
+
+The mobile application uses React Native, Expo, and TypeScript.
+The backend uses Node.js, Express, and TypeScript.
+PostgreSQL is the primary database, with Prisma as the ORM.
+
+The backend follows a modular-monolith architecture. Coding execution must remain isolated from the trusted API process and use a provider-agnostic integration.
+
+The initial release targets Android and iOS. Web support is deferred. Hosting providers, code-runner provider selection, and other explicitly identified implementation details remain open.
+
+Authentication requirements must remain consistent with AUTH_SECURITY_SPEC.md and API_DATA_CONTRACTS.md.
 
 ## 3. Backend Module Boundaries
 
@@ -112,17 +122,28 @@ The endpoint names below are proposed contracts, not existing implemented routes
 
 ## 5. Authentication and User APIs
 
-| Method | Proposed endpoint           | Purpose                         |
-| ------ | --------------------------- | ------------------------------- |
-| POST   | `/api/v1/auth/register`     | Create an account               |
-| POST   | `/api/v1/auth/login`        | Authenticate a user             |
-| POST   | `/api/v1/auth/logout`       | End the current session         |
-| GET    | `/api/v1/users/me`          | Get the current user's profile  |
-| PATCH  | `/api/v1/users/me`          | Update supported profile fields |
-| GET    | `/api/v1/users/me/settings` | Read supported settings         |
-| PATCH  | `/api/v1/users/me/settings` | Update supported settings       |
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/v1/auth/register` | Create an account |
+| POST | `/api/v1/auth/login` | Authenticate a user |
+| POST | `/api/v1/auth/refresh` | Rotate the refresh token and renew access |
+| POST | `/api/v1/auth/logout` | Revoke the current refresh session |
+| POST | `/api/v1/auth/password/forgot` | Request password recovery |
+| POST | `/api/v1/auth/password/reset` | Reset the password using a valid recovery token |
+| GET | `/api/v1/users/me` | Get the current user's profile |
+| PATCH | `/api/v1/users/me` | Update supported profile fields |
+| GET | `/api/v1/users/me/settings` | Read supported settings |
+| PATCH | `/api/v1/users/me/settings` | Update supported settings |
 
-Exact authentication endpoints depend on the chosen provider. If the provider manages registration, login or sessions directly, ZELO should use its supported integration instead of duplicating those flows unnecessarily.
+ZELO uses custom email/password authentication implemented by the backend. Authentication endpoints and their contracts are defined in API_DATA_CONTRACTS.md.
+
+The backend must enforce the approved authentication and session policies documented in AUTH_SECURITY_SPEC.md.
+
+Google and Apple sign-in buttons are visual placeholders only. They must not initiate OAuth flows in the MVP.
+
+When either button is tapped, the app must display exactly:
+
+"This feature will be implemented in the future."
 
 ### Requirements
 
@@ -409,18 +430,29 @@ Also test invalid requests, duplicate submissions, network failures and unauthor
 
 ## 17. Open Decisions
 
-Before implementation, finalise:
+The following implementation details remain open:
 
-1. Backend framework and runtime.
-2. Database and ORM.
-3. Authentication provider and session strategy.
-4. Production hosting and environment configuration.
-5. Code runner deployment and communication contract.
-6. API request/response schemas.
-7. Pagination and content caching policy.
-8. Database migration and backup strategy.
-9. Logging, monitoring and privacy requirements.
-10. Offline progress synchronisation requirements.
+1. Production hosting providers and environment configuration.
+2. Code-runner provider and communication contract.
+3. Final request and response schemas for remaining APIs.
+4. Pagination and content caching policies.
+5. Database backup, recovery, and operational procedures.
+6. Logging, monitoring, and production privacy controls.
+7. Offline progress synchronisation requirements.
+8. Rate-limit thresholds and detailed abuse-protection policies.
+9. Exact logout request authentication mechanism.
+
+The following decisions are already approved:
+
+- Backend: Node.js + Express + TypeScript.
+- Database: PostgreSQL + Prisma.
+- Architecture: Modular monolith.
+- Authentication: Custom email/password authentication.
+- Initial platforms: Android and iOS.
+- Code execution: Provider-agnostic integration with a managed execution service initially.
+- Web support: Deferred from the initial MVP.
+
+Implementation must follow the approved API contracts, database schema, and authentication security specification.
 
 **Implementation principle:** Keep the backend small and modular. Implement the critical learning journey reliably before adding infrastructure for hypothetical future scale.
 

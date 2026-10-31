@@ -2,8 +2,8 @@
 
 **Document ID:** ZELO-ARCH-042
 **Filename:** `FINAL_TECHNOLOGY_STACK.md`
-**Version:** 4.2
-**Status:** Draft — Proposed Stack
+**Version:** 4.3
+**Status:** Approved Core Stack — Implementation in Progress
 **Product:** ZELO 2.0 — Learn. Practice. Build.
 
 ---
@@ -24,27 +24,34 @@ The stack must support:
 
 ## 2. Executive Recommendation
 
-The proposed stack is:
+The approved core technology stack for ZELO 2.0 MVP is:
 
-| Layer              | Recommended technology                                                   | Status                               |
-| ------------------ | ------------------------------------------------------------------------ | ------------------------------------ |
-| Mobile application | React Native + Expo                                                      | Proposed                             |
-| Language           | TypeScript                                                               | Proposed                             |
-| Navigation         | Expo-compatible React Navigation solution                                | Proposed                             |
-| UI styling         | React Native StyleSheet and shared design tokens                         | Proposed                             |
-| Server state       | TanStack Query or a similarly focused solution                           | Proposed                             |
-| Backend API        | Node.js + Express                                                        | Proposed                             |
-| Database           | PostgreSQL                                                               | Proposed                             |
-| ORM                | Prisma                                                                   | Proposed                             |
-| Authentication     | Secure session/token design, provider to be selected                     | Open                                 |
-| Lesson content     | Version-controlled JSON files                                            | Proposed                             |
-| Code evaluation    | Isolated execution service                                               | Required architecture; provider open |
-| Testing            | Jest or Vitest where compatible, API integration tests, end-to-end tests | Proposed                             |
-| Version control    | Git + GitHub                                                             | Proposed                             |
-| CI/CD              | GitHub Actions or an equivalent pipeline                                 | Proposed                             |
-| Hosting            | Selected after platform and code-runner evaluation                       | Open                                 |
+| Layer | Technology | Status |
+|---|---|---|
+| Mobile application | React Native + Expo | Approved |
+| Language | TypeScript | Approved |
+| Backend API | Node.js + Express + TypeScript | Approved |
+| Database | PostgreSQL | Approved |
+| ORM | Prisma | Approved |
+| Authentication | Custom email/password authentication implemented by the ZELO backend | Approved |
+| Mobile navigation | Expo Router | Proposed implementation choice |
+| UI styling | React Native StyleSheet and shared design tokens | Proposed |
+| Server state | Focused query/cache solution, if required | To be finalised |
+| Local UI state | React hooks | Recommended default |
+| Lesson content | Version-controlled JSON files | Recommended |
+| Code evaluation | Provider-agnostic integration with a managed execution service initially | Architecture approved; provider open |
+| Testing | Unit, integration, and end-to-end tests | Required; exact tooling to be finalised |
+| Version control | Git + GitHub | Project standard |
+| CI/CD | GitHub Actions or an equivalent pipeline | To be finalised |
+| Hosting | Managed API and PostgreSQL hosting; execution service hosted separately | Provider selection open |
 
-**Recommendation:** Prefer a single mobile application, a modular backend, one relational database, and a separately isolated code execution environment. Do not introduce microservices for ordinary application features.
+The initial release targets Android and iOS. Web support is deferred.
+
+The backend uses a modular-monolith architecture. Coding execution must remain isolated from the trusted application backend.
+
+The approved authentication policy is documented in AUTH_SECURITY_SPEC.md. API contracts and database requirements must remain consistent with that specification.
+
+**Recommendation:** Implement one meaningful feature at a time. Test it, run typechecking, verify the changes, commit, and then proceed to the next feature.
 
 ## 3. Platform Decision
 
@@ -67,7 +74,13 @@ Trade-offs:
 * Some native dependencies may require development builds rather than Expo Go.
 * Browser-first accessibility and desktop editor ergonomics require separate consideration if web support becomes a primary requirement.
 
-**Decision gate:** Confirm whether the first release targets mobile only or mobile plus web before finalising the platform.
+**Approved platform scope:** The initial ZELO 2.0 MVP targets
+Android and iOS using React Native and Expo. Web support is
+deferred and must not expand the initial implementation scope.
+
+The mobile architecture should preserve reasonable flexibility
+for future platform expansion without introducing web-specific
+complexity into the MVP.
 
 ## 4. Frontend Architecture
 
@@ -230,7 +243,28 @@ Requirements:
 * Account recovery and deletion policies.
 * No credentials or secrets embedded in the client application.
 
-The identity provider and exact session strategy remain open decisions. Do not implement a provider-specific flow until the decision is approved.
+ZELO uses custom email/password authentication implemented by
+the backend. The approved authentication policy is defined in
+AUTH_SECURITY_SPEC.md.
+
+Implementation must follow these requirements:
+
+- Access tokens expire after 15 minutes.
+- Refresh sessions expire after 30 days.
+- Refresh tokens are rotated, with reuse detection.
+- Logout revokes the current refresh session.
+- Successful password reset revokes all active sessions.
+- Password-recovery tokens expire after 30 minutes and are
+  single-use.
+- Passwords are hashed using Argon2.
+- The backend stores hashes rather than raw refresh or recovery
+  tokens.
+- Authentication credentials are stored securely on mobile
+  using Expo SecureStore.
+
+Token format, signing-key management, detailed rotation
+mechanics, and rate-limit thresholds must follow the approved
+security specification and documented implementation decisions.
 
 ## 10. Testing Strategy
 
@@ -315,21 +349,32 @@ Avoid adding the following without a demonstrated requirement:
 
 These may become relevant later, but they are not prerequisites for delivering a useful learning experience.
 
-## 13. Approval Checklist
+## 13. Approval and Implementation Checklist
 
-Before implementation, explicitly approve or revise:
+### Approved decisions
 
-* [ ] Primary target: mobile only or mobile plus web.
-* [ ] React Native + Expo.
-* [ ] TypeScript.
-* [ ] Node.js + Express.
-* [ ] PostgreSQL + Prisma.
-* [ ] Version-controlled JSON lesson content.
-* [ ] Authentication provider and session strategy.
-* [ ] Coding execution and evaluation provider.
-* [ ] State-management approach.
-* [ ] Hosting and deployment providers.
-* [ ] Testing tools and CI pipeline.
+- [x] Android and iOS as the initial target platforms.
+- [x] React Native + Expo.
+- [x] TypeScript.
+- [x] Node.js + Express for the backend.
+- [x] PostgreSQL + Prisma.
+- [x] Custom email/password authentication in the ZELO backend.
+- [x] Modular-monolith backend architecture.
+- [x] Provider-agnostic code-runner integration.
+- [x] Managed code execution initially, with the provider
+      selection still open.
+- [x] Web support deferred from the initial MVP.
+
+### Implementation choices to finalise
+
+- [ ] Expo Router integration details.
+- [ ] Server-state query/cache tooling, if required.
+- [ ] Exact testing frameworks and CI pipeline.
+- [ ] Final lesson-content loading and validation implementation details.
+- [ ] API and database deployment providers.
+- [ ] Code-runner provider and communication contract.
+- [ ] Production secrets management and monitoring.
+- [ ] Database backup and recovery procedures.
 
 ## 14. Final Recommendation
 
@@ -339,7 +384,9 @@ Use the simplest architecture that can safely deliver the core learning loop:
 
 Prioritise the reliability and quality of lessons before adding infrastructure for speculative future features.
 
-The technology stack is ready for approval only after the platform target, authentication approach, code execution strategy, and deployment constraints have been resolved.
+The core technology stack and initial platform scope are approved. Implementation-specific decisions remain open only where explicitly identified in this document.
+
+Proceed incrementally, preserving the approved product scope, security requirements, and API/database contracts. Do not introduce unrelated features or additional infrastructure without an approved requirement.
 
 ---
 

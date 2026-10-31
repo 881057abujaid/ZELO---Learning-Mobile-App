@@ -117,30 +117,120 @@ Endpoints must use these codes consistently. A coding challenge's learner soluti
 
 ## 5. Authentication Contracts
 
-ZELO 2.0 MVP uses custom email/password authentication implemented in the ZELO backend, as approved in TD-05 and AUTH_SECURITY_SPEC.md.
+ZELO 2.0 MVP uses custom email/password authentication
+implemented by the ZELO backend, as approved in TD-05
+and AUTH_SECURITY_SPEC.md.
 
-The backend manages credential validation, access tokens, refresh sessions, session revocation, and authentication lifecycle according to the approved authentication security specification.
+The backend is authoritative for credential validation,
+token issuance, refresh-session management, revocation,
+and password-recovery operations.
 
-### Proposed endpoints
+### 5.1 Authentication Endpoints
 
-| Method | Endpoint         | Purpose                                                 |
-| ------ | ---------------- | ------------------------------------------------------- |
-| `POST` | `/auth/register` | Register an account using email and password |
-| `POST` | `/auth/login`    | Authenticate credentials and establish a session      |
-| `POST` | `/auth/logout`   | Revoke the current refresh session                                 |
-| `GET`  | `/users/me`      | Retrieve the authenticated user's profile               |
+All endpoints use the `/api/v1` base path.
 
-### Contract requirements
+| Method | Endpoint | Purpose | Authentication |
+|---|---|---|---|
+| POST | `/auth/register` | Create an account | Public |
+| POST | `/auth/login` | Authenticate credentials and create a session | Public |
+| POST | `/auth/refresh` | Rotate the refresh token and issue a new access token | Refresh token required |
+| POST | `/auth/logout` | Revoke the current refresh session | Authenticated session |
+| POST | `/auth/password/forgot` | Request password recovery | Public |
+| POST | `/auth/password/reset` | Reset a password using a recovery token | Recovery token required |
+| GET | `/users/me` | Retrieve the authenticated user's profile | Access token required |
 
-* The server determines the current user from the authenticated session or token.
-* A client must not select another user's identity by sending a different user ID.
-* Registration and login responses must not disclose sensitive authentication data.
-* Logout must invalidate the relevant session according to the chosen strategy.
-* Authentication errors must be handled consistently.
-* Session renewal, recovery, and deletion flows must follow the approved security specification.
+Google and Apple sign-in buttons are UI-only in the MVP.
+Tapping either button must display exactly:
 
-Request and response fields must follow the approved authentication
-security specification and the endpoint-specific contracts.
+"This feature will be implemented in the future."
+
+These buttons must not initiate OAuth or create a session.
+
+### 5.2 Token and Session Requirements
+
+- Access tokens expire after 15 minutes.
+- Refresh sessions expire after 30 days.
+- Refresh tokens must be rotated when successfully used.
+- The backend must detect reuse of an already-consumed refresh token.
+- Logout revokes the current refresh session.
+- The server stores refresh-token hashes, not raw refresh tokens.
+- The mobile app stores authentication credentials using
+  Expo SecureStore.
+- Protected endpoints derive the current user identity from
+  validated authentication credentials.
+- Client-supplied user IDs must never override the authenticated
+  identity.
+- Expired, revoked, or invalid credentials must not grant access.
+
+Token format, signing-key management, and detailed refresh-token
+reuse response behavior must follow the approved security
+specification and its documented implementation decisions.
+
+### 5.3 Request and Response Requirements
+
+Every request body must be validated by the backend.
+
+Authentication responses must follow the standard response
+envelope defined in Section 3.
+
+Registration and login responses must never expose password hashes or other internal authentication secrets.
+
+When a refresh token is issued to the client, the raw token must not be persisted in server-side records. The server must store only its hash.
+
+Authentication tokens must be returned and stored only through the approved session-management flow.
+
+Invalid login credentials must produce a consistent error that does not disclose whether an email address is registered.
+
+The refresh endpoint must reject expired, revoked, invalid, or previously consumed refresh tokens.
+
+A successful refresh must rotate the refresh token and issue a new access token.
+
+Logout must revoke the current refresh session. A successful logout must not depend on the client deleting its local tokens.
+
+### 5.4 Password Recovery Requirements
+
+The password-recovery request must not disclose whether an email address belongs to an existing account.
+
+Recovery tokens must be:
+- Time-limited, expiring 30 minutes after issuance.
+- Single-use.
+- Stored as hashes on the server.
+- Invalidated after successful use.
+
+A successful password reset must:
+- Validate that the recovery token is valid, unexpired, and unused.
+- Update the user's password using Argon2 password hashing.
+- Consume the recovery token.
+- Revoke all active sessions belonging to the user.
+- Perform the password update, token consumption, and session revocation in a single database transaction.
+
+The user must authenticate again after a successful password reset.
+
+Invalid, expired, or previously consumed recovery tokens must not permit a password change.
+
+### 5.5 Rate Limiting and Validation
+
+Registration, login, refresh, and password-recovery endpoints
+must have appropriate abuse protection.
+
+Request validation must happen on the server. Client-side validation is for usability and is not a security boundary.
+
+Rate-limit thresholds and abuse-protection policies must be documented before production release.
+
+### 5.6 Authentication Acceptance Criteria
+
+- A user can register and log in with valid credentials.
+- Duplicate account registration is rejected consistently.
+- Invalid credentials do not create a session.
+- Access tokens expire after 15 minutes.
+- Refresh sessions expire after 30 days.
+- Refresh-token rotation invalidates the previous token.
+- Reuse of a consumed refresh token is detected.
+- Logout revokes the current refresh session.
+- Password-recovery tokens expire and cannot be reused.
+- Password recovery does not disclose account existence.
+- Protected endpoints reject invalid or expired access tokens.
+- Users cannot access another user's data by changing request IDs.
 
 ## 6. Curriculum Contracts
 

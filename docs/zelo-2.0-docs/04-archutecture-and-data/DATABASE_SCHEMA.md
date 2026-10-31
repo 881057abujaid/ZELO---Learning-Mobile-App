@@ -79,22 +79,35 @@ The schema must support:
 
 ### 3.1 User
 
-Represents a registered ZELO learner.
+Represents a registered ZELO learner and the owner of their
+authentication identity and private learning data.
 
-| Field         | Purpose                                                  |
-| ------------- | -------------------------------------------------------- |
-| `id`          | Stable primary identifier                                |
-| `displayName` | Learner's display name                                   |
-| `email`       | Account email, subject to authentication-provider design |
-| `createdAt`   | Account creation timestamp                               |
-| `updatedAt`   | Last update timestamp                                    |
+| Field | Purpose |
+|---|---|
+| `id` | Stable primary identifier |
+| `email` | Email address supplied during registration |
+| `emailNormalized` | Normalized email used for uniqueness checks |
+| `passwordHash` | Argon2 password hash |
+| `createdAt` | Account creation timestamp |
+| `updatedAt` | Last update timestamp |
 
-**Rules:**
+Rules:
 
-* The primary identifier must be stable.
-* Email uniqueness and verification rules depend on the authentication design.
-* Passwords must not be stored as plaintext.
-* If an external authentication provider owns credentials, store its stable identity reference rather than duplicating authentication data unnecessarily.
+- Email/password authentication is implemented by the ZELO backend.
+- `emailNormalized` must be unique.
+- Email normalization must be applied consistently during
+  registration and login.
+- Passwords must never be stored in plaintext.
+- Passwords must be hashed using Argon2.
+- Password hashes must never be returned through public APIs.
+- Email verification is optional in the initial MVP.
+- A user's identity must be derived from authenticated credentials,
+  not from a client-supplied user ID.
+- User-owned resources must enforce server-side ownership checks.
+
+The Prisma schema is the implementation-level representation
+of this logical model. Changes to the logical schema must be
+reflected in Prisma migrations and relevant API contracts.
 
 ### 3.2 User Settings
 
@@ -107,6 +120,86 @@ Stores only preferences that the MVP actually supports.
 | `updatedAt`   | Last update timestamp                  |
 
 Avoid creating settings fields for features that do not exist. If the MVP has no configurable theme or notification preferences, do not introduce unnecessary settings complexity.
+
+### 3.2.1 Authentication Persistence
+
+Authentication persistence must support refresh-token rotation, reuse detection, session revocation, and password recovery.
+
+#### Refresh Token Records
+
+The database must persist refresh-token records associated
+with a user and a refresh-session family.
+
+Each record must support:
+
+| Field | Purpose |
+|---|---|
+| `id` | Stable token-record identifier |
+| `userId` | Owner of the authentication session |
+| `familyId` | Identifier grouping rotated tokens belonging to one session |
+| `tokenHash` | Hash of the refresh token; unique |
+| `createdAt` | Token-record creation timestamp |
+| `expiresAt` | Token expiry timestamp |
+| `consumedAt` | Timestamp when the token was successfully rotated |
+| `revokedAt` | Timestamp when the token or session was revoked |
+| `replacedByTokenId` | Reference to the replacement token, when applicable |
+
+Requirements:
+
+- Raw refresh tokens must never be stored in the database.
+- Token hashes must be unique.
+- Each token must belong to a valid user.
+- Refresh-token rotation must be performed transactionally.
+- A consumed token must not be accepted for another refresh.
+- Reuse detection must identify the associated session family.
+- When reuse is detected, the backend must revoke the affected
+  session family and reject subsequent authentication attempts
+  using tokens from that family.
+- `revokedAt` records the revocation state of an individual token
+  record. Session-family revocation must be enforced consistently
+  across the affected family.
+- Logging out must revoke the current refresh session.
+- A successful password reset must revoke all active sessions belonging to the user.
+- Expired and revoked tokens must not establish an authenticated session.
+
+#### Password Recovery Records
+
+The database must persist password-recovery token records.
+
+Each record must support:
+
+| Field | Purpose |
+|---|---|
+| `id` | Stable recovery-record identifier |
+| `userId` | Account requesting recovery |
+| `tokenHash` | Hash of the recovery token; unique |
+| `createdAt` | Token creation timestamp |
+| `expiresAt` | Recovery-token expiry timestamp |
+| `usedAt` | Timestamp when the token was consumed |
+
+Requirements:
+
+- Raw recovery tokens must never be stored in the database.
+- Recovery tokens must expire 30 minutes after issuance.
+- Recovery tokens must be single-use.
+- Expired or previously consumed tokens must be rejected.
+- A token must belong to a valid user.
+- Token consumption and password replacement must be atomic.
+- Recovery requests must not disclose whether an account exists.
+
+The implementation must define the exact Prisma model names, deletion behavior, and indexes.
+
+Password-recovery tokens must expire 30 minutes after issuance,
+as specified in AUTH_SECURITY_SPEC.md.
+
+A successful password reset must atomically:
+- Replace the user's password with an Argon2 password hash.
+- Mark the recovery token as consumed.
+- Revoke all active sessions belonging to the user.
+
+The password update, recovery-token consumption, and session
+revocation must succeed or roll back together in one database
+transaction.
 
 ### 3.3 World
 

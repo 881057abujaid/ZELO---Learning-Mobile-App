@@ -255,20 +255,54 @@ This specification depends on:
 
 ## 13. Open Decisions
 
-Before implementation, decide:
+The following decisions remain open and must be resolved
+before implementing the functionality that depends on them:
 
-1. Authentication provider and sign-in methods.
-2. Whether the first release supports mobile only or mobile and web.
-3. Session persistence, expiration and revocation policy.
-4. Whether email verification is required.
-5. Whether password recovery is applicable to the selected provider.
-6. Account deletion and retention rules.
-7. Whether an administrative content-publishing interface is part of the MVP.
+1. Account deletion and data-retention rules, including
+   the treatment of learning history, coding submissions,
+   and reward records.
+2. Whether an administrative content-publishing interface
+   is included in the MVP.
 
-These decisions should be documented before authentication code is implemented.
+The following authentication decisions are already approved
+in TD-05 and must not be treated as unresolved:
+
+- Authentication: Custom email/password authentication
+  implemented by the ZELO backend.
+- Access-token lifetime: 15 minutes.
+- Refresh-session lifetime: 30 days.
+- Refresh-token rotation and reuse prevention.
+- Logout revokes the current refresh session.
+- Email verification is optional for the initial MVP.
+- Password recovery uses single-use tokens that expire 30 minutes after issuance.
+- After a successful password reset, all active sessions belonging to the user must be revoked.
+- Mobile credentials are stored through Expo SecureStore.
+- Refresh tokens are stored as hashes on the server.
+
+Implementation-specific security details, including token
+format, signing-key management, refresh-token rotation
+mechanics, and rate-limit thresholds, must be defined
+before production release.
 
 ## 14. Definition of Done
 
-This specification is ready for implementation when the authentication provider and session model are selected, protected resources are mapped to ownership rules, account lifecycle decisions are documented, and the security acceptance tests are included in the project test plan.
+This specification is ready for implementation when:
+
+- Approved authentication decisions in TD-05 are reflected
+  consistently throughout this document.
+- Protected resources are mapped to server-side ownership
+  and authorisation rules.
+- Required authentication security tests are included in the project test plan.
+- Password-reset tokens expire after 30 minutes and cannot be reused.
+- Successful password reset revokes all active sessions belonging to the user.
+- Implementation-specific security details are documented
+  before production release.
+- Account lifecycle decisions required for the functionality
+  being implemented are documented.
+
+Account deletion and data-retention decisions must be
+resolved before implementing account deletion functionality.
+They must not be silently assumed by unrelated authentication
+features.
 
 **End of Document — ZELO-SEC-025**
