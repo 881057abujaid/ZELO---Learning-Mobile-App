@@ -57,22 +57,23 @@ These contracts are proposed specifications. They become implementation requirem
 
 ```json
 {
+  "success": true,
   "data": {
     "id": "html-first-webpage-001",
     "title": "Build Your First Webpage"
-  },
-  "meta": {
-    "requestId": "req_example"
   }
 }
 ```
 
-The `data` object varies by endpoint. The request ID is optional if the hosting or logging architecture cannot provide it consistently.
+The `data` object varies by endpoint. Successful responses use `success: true` and include the endpoint payload in `data`. Request IDs are not part of the required response envelope.
+
+Endpoint response examples in the following sections show endpoint-specific payloads for readability. Actual successful HTTP responses must use the standard envelope with `success: true` and the payload inside `data`. Request-body examples are not wrapped in this response envelope.
 
 ### Error response
 
 ```json
 {
+  "success": false,
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "The request contains invalid fields.",
@@ -81,8 +82,7 @@ The `data` object varies by endpoint. The request ID is optional if the hosting 
         "field": "answer",
         "reason": "Required field is missing."
       }
-    ],
-    "requestId": "req_example"
+    ]
   }
 }
 ```
@@ -92,7 +92,7 @@ The `data` object varies by endpoint. The request ID is optional if the hosting 
 * `code` must be a stable machine-readable identifier.
 * `message` must be safe to display to a learner.
 * `details` is optional and must not reveal secrets or hidden evaluation information.
-* `requestId` is optional but recommended for troubleshooting.
+* The `success` field is `false` for error responses. Request IDs are not required by the current implementation.
 * Stack traces, SQL errors, credentials, and internal infrastructure details must never be returned.
 
 ## 4. HTTP Status Codes

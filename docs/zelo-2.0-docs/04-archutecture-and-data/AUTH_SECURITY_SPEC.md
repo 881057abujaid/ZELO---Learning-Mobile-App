@@ -159,6 +159,7 @@ Security requirements:
 
 ```json
 {
+  "success": false,
   "error": {
     "code": "UNAUTHENTICATED",
     "message": "Please sign in to continue."
@@ -166,7 +167,7 @@ Security requirements:
 }
 ```
 
-The response format must remain consistent with the API contract defined in `BACKEND_API_SPEC.md`.
+The response format must remain consistent with the API contract defined in `API_DATA_CONTRACTS.md`.
 
 ## 8. Account and Personal Data Protection
 
@@ -246,7 +247,7 @@ Security-critical protections must not be excluded merely to simplify the MVP.
 
 This specification depends on:
 
-* `BACKEND_API_SPEC.md`
+* `API_DATA_CONTRACTS.md`
 * `DATABASE_SCHEMA.md`
 * `NAVIGATION_FLOW.md`
 * `LOGIN_SIGNUP_SPEC.md`
