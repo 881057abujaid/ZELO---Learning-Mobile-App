@@ -5,6 +5,8 @@ import type {
     RegistrationInput,
     LoginInput,
     RefreshInput,
+    ForgotPasswordInput,
+    ResetPasswordInput,
 } from "./auth.validation.js";
 import { createAccessToken } from "./access-token.service.js";
 import {
@@ -14,7 +16,13 @@ import {
     findRefreshTokenByHash,
     revokeRefreshTokenFamily,
     rotateRefreshToken,
+    findUserForPasswordReset,
+    createPasswordResetToken,
+    deletePasswordResetTokenByHash,
+    completePasswordReset,
 } from "./auth.repository.js";
+import { sendPasswordResetEmail } from "./password-reset-email.service.js";
+import { getPasswordResetUrlConfig } from "../../config/email-config.js";
 
 export async function registerUser(input: RegistrationInput) {
     const email = input.email;
@@ -180,4 +188,84 @@ export async function logoutUser(input: RefreshInput): Promise<void> {
     }
 
     await revokeRefreshTokenFamily(storedToken.familyId, new Date());
+}
+
+const PASSWORD_RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
+
+export async function requestPasswordReset(
+    input: ForgotPasswordInput,
+): Promise<void> {
+    const emailNormalized = input.email.trim().toLowerCase();
+
+    const user = await findUserForPasswordReset(emailNormalized);
+
+    // Avoid revealing whether an account exists.
+    if (!user) {
+        return;
+    }
+
+    // Validate configuration before creating a database token.
+    const config = getPasswordResetUrlConfig();
+
+    // Generate a cryptographically secure, URL-safe token.
+    const resetToken = randomBytes(32).toString("base64url");
+
+    // Build the configured destination URL and safely add the token.
+    const resetUrl = new URL(config.passwordResetUrlBase);
+    resetUrl.searchParams.set("token", resetToken);
+
+    // Persist only the SHA-256 hash.
+    const tokenHash = createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const now = new Date();
+
+    await createPasswordResetToken({
+        userId: user.id,
+        tokenHash,
+        createdAt: now,
+        expiresAt: new Date(
+            now.getTime() + PASSWORD_RESET_TOKEN_TTL_MS,
+        ),
+    });
+
+    try {
+        await sendPasswordResetEmail({
+            to: user.email,
+            resetUrl: resetUrl.toString(),
+        });
+    } catch (error) {
+        try {
+            await deletePasswordResetTokenByHash(tokenHash);
+        } catch {
+            // Preserve the original email delivery error.
+        }
+
+        throw error;
+    }
+}
+
+export async function resetPassword(
+    input: ResetPasswordInput,
+): Promise<void> {
+    const tokenHash = createHash("sha256")
+        .update(input.token)
+        .digest("hex");
+
+    const passwordHash = await argon2.hash(input.newPassword);
+
+    const completed = await completePasswordReset({
+        tokenHash,
+        passwordHash,
+        now: new Date(),
+    });
+
+    if (!completed) {
+        throw new AppError(
+            400,
+            "INVALID_OR_EXPIRED_RESET_TOKEN",
+            "This password reset link is invalid or has expired.",
+        );
+    }
 }

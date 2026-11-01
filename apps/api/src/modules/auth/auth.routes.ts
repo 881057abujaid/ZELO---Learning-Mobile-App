@@ -5,11 +5,15 @@ import {
     login,
     refresh,
     logout,
+    forgotPassword,
+    resetPassword,
 } from "./auth.controller.js";
 import {
     registrationSchema,
     loginSchema,
     refreshSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema,
 } from "./auth.validation.js";
 import { validateRequest } from "../../middleware/validate-request.js";
 
@@ -73,6 +77,21 @@ const logoutRateLimit = rateLimit({
     },
 });
 
+const passwordRecoveryRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: {
+            code: "RATE_LIMITED",
+            message:
+                "Too many password recovery attempts. Please try again later.",
+        },
+    },
+});
+
 authRouter.post(
     "/register",
     registrationRateLimit,
@@ -99,6 +118,20 @@ authRouter.post(
     logoutRateLimit,
     validateRequest(refreshSchema),
     logout,
+);
+
+authRouter.post(
+    "/forgot-password",
+    passwordRecoveryRateLimit,
+    validateRequest(forgotPasswordSchema),
+    forgotPassword,
+);
+
+authRouter.post(
+    "/reset-password",
+    passwordRecoveryRateLimit,
+    validateRequest(resetPasswordSchema),
+    resetPassword,
 );
 
 export default authRouter;

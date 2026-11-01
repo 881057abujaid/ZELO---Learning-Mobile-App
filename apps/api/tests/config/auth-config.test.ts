@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAuthConfig } from "./auth-config.js";
+import { getAuthConfig } from "../../src/config/auth-config.js";
 
 describe("getAuthConfig", () => {
     it("accepts a valid access-token secret", () => {

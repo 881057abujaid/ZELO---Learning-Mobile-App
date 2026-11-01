@@ -1,8 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "../../generated/prisma/client.js";
 
-const { userCreateMock } = vi.hoisted(() => ({
+const {
+    userCreateMock,
+    transactionMock,
+    passwordResetTokenFindUniqueMock,
+    passwordResetTokenUpdateManyMock,
+    userUpdateMock,
+    refreshTokenUpdateManyMock,
+} = vi.hoisted(() => ({
     userCreateMock: vi.fn(),
+    transactionMock: vi.fn(),
+    passwordResetTokenFindUniqueMock: vi.fn(),
+    passwordResetTokenUpdateManyMock: vi.fn(),
+    userUpdateMock: vi.fn(),
+    refreshTokenUpdateManyMock: vi.fn(),
 }));
 
 vi.mock("../../src/lib/prisma.js", () => ({
@@ -10,11 +22,14 @@ vi.mock("../../src/lib/prisma.js", () => ({
         user: {
             create: userCreateMock,
         },
+        $transaction: transactionMock,
     },
 }));
 
-import { createUser } from "../../src/modules/auth/auth.repository.js";
-import { AppError } from "../../src/common/errors/app-error.js";
+import {
+    createUser,
+    completePasswordReset,
+} from "../../src/modules/auth/auth.repository.js";
 
 describe("createUser", () => {
     beforeEach(() => {
@@ -93,5 +108,147 @@ describe("createUser", () => {
         userCreateMock.mockRejectedValue(prismaError);
 
         await expect(createUser(input)).rejects.toBe(prismaError);
+    });
+});
+
+describe("completePasswordReset", () => {
+    const input = {
+        tokenHash: "sha256-reset-token-hash",
+        passwordHash: "argon2$new-password-hash",
+        now: new Date("2026-11-01T10:00:00.000Z"),
+    };
+
+    const resetToken = {
+        id: "reset-token-123",
+        userId: "user-123",
+    };
+
+    const transaction = {
+        passwordResetToken: {
+            findUnique: passwordResetTokenFindUniqueMock,
+            updateMany: passwordResetTokenUpdateManyMock,
+        },
+        user: {
+            update: userUpdateMock,
+        },
+        refreshToken: {
+            updateMany: refreshTokenUpdateManyMock,
+        },
+    };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+
+        transactionMock.mockImplementation(
+            async (callback: (tx: typeof transaction) => unknown) =>
+                callback(transaction),
+        );
+
+        passwordResetTokenFindUniqueMock.mockResolvedValue(
+            resetToken,
+        );
+
+        passwordResetTokenUpdateManyMock.mockResolvedValue({
+            count: 1,
+        });
+
+        userUpdateMock.mockResolvedValue({
+            id: "user-123",
+        });
+
+        refreshTokenUpdateManyMock.mockResolvedValue({
+            count: 2,
+        });
+    });
+
+    it("consumes the token, updates the password and revokes active sessions", async () => {
+        const result = await completePasswordReset(input);
+
+        expect(result).toBe(true);
+
+        expect(passwordResetTokenFindUniqueMock)
+            .toHaveBeenCalledWith({
+                where: {
+                    tokenHash: input.tokenHash,
+                },
+                select: {
+                    id: true,
+                    userId: true,
+                },
+            });
+
+        expect(passwordResetTokenUpdateManyMock)
+            .toHaveBeenCalledWith({
+                where: {
+                    id: resetToken.id,
+                    tokenHash: input.tokenHash,
+                    consumedAt: null,
+                    expiresAt: {
+                        gt: input.now,
+                    },
+                },
+                data: {
+                    consumedAt: input.now,
+                },
+            });
+
+        expect(userUpdateMock).toHaveBeenCalledWith({
+            where: {
+                id: resetToken.userId,
+            },
+            data: {
+                passwordHash: input.passwordHash,
+            },
+        });
+
+        expect(refreshTokenUpdateManyMock)
+            .toHaveBeenCalledWith({
+                where: {
+                    userId: resetToken.userId,
+                    revokedAt: null,
+                },
+                data: {
+                    revokedAt: input.now,
+                },
+            });
+    });
+
+    it("returns false when the token does not exist", async () => {
+        passwordResetTokenFindUniqueMock.mockResolvedValue(null);
+
+        const result = await completePasswordReset(input);
+
+        expect(result).toBe(false);
+        expect(passwordResetTokenUpdateManyMock)
+            .not.toHaveBeenCalled();
+        expect(userUpdateMock).not.toHaveBeenCalled();
+        expect(refreshTokenUpdateManyMock)
+            .not.toHaveBeenCalled();
+    });
+
+    it("does not update the password when token consumption fails", async () => {
+        passwordResetTokenUpdateManyMock.mockResolvedValue({
+            count: 0,
+        });
+
+        const result = await completePasswordReset(input);
+
+        expect(result).toBe(false);
+        expect(userUpdateMock).not.toHaveBeenCalled();
+        expect(refreshTokenUpdateManyMock)
+            .not.toHaveBeenCalled();
+    });
+
+    it("propagates database errors so the transaction can roll back", async () => {
+        const databaseError = new Error("Database unavailable");
+
+        userUpdateMock.mockRejectedValue(databaseError);
+
+        await expect(
+            completePasswordReset(input),
+        ).rejects.toBe(databaseError);
+
+        expect(refreshTokenUpdateManyMock)
+            .not.toHaveBeenCalled();
     });
 });

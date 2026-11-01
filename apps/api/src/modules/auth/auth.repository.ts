@@ -180,3 +180,132 @@ export async function findUserForLogin(emailNormalized: string) {
         },
     });
 }
+
+interface CreatePasswordResetTokenInput {
+    userId: string;
+    tokenHash: string;
+    createdAt: Date;
+    expiresAt: Date;
+}
+
+export async function createPasswordResetToken(
+    input: CreatePasswordResetTokenInput,
+) {
+    return prisma.$transaction(async (transaction) => {
+        // Remove older recovery tokens for this user.
+        await transaction.passwordResetToken.deleteMany({
+            where: {
+                userId: input.userId,
+            },
+        });
+
+        // Store only the hash, never the raw recovery token.
+        return transaction.passwordResetToken.create({
+            data: {
+                userId: input.userId,
+                tokenHash: input.tokenHash,
+                createdAt: input.createdAt,
+                expiresAt: input.expiresAt,
+            },
+            select: {
+                id: true,
+                userId: true,
+                createdAt: true,
+                expiresAt: true,
+            },
+        });
+    });
+}
+
+export async function findUserForPasswordReset(emailNormalized: string) {
+    return prisma.user.findUnique({
+        where: { emailNormalized },
+        select: {
+            id: true,
+            email: true,
+        },
+    });
+}
+
+
+export async function deletePasswordResetTokenByHash(
+    tokenHash: string,
+) {
+    return prisma.passwordResetToken.deleteMany({
+        where: {
+            tokenHash,
+        },
+    });
+}
+
+interface CompletePasswordResetInput {
+    tokenHash: string;
+    passwordHash: string;
+    now: Date;
+}
+
+export async function completePasswordReset(
+    input: CompletePasswordResetInput,
+): Promise<boolean> {
+    return prisma.$transaction(async (transaction) => {
+        // Find the account associated with this reset token.
+        const resetToken =
+            await transaction.passwordResetToken.findUnique({
+                where: {
+                    tokenHash: input.tokenHash,
+                },
+                select: {
+                    id: true,
+                    userId: true,
+                },
+            });
+
+        if (!resetToken) {
+            return false;
+        }
+
+        // Consume the token conditionally. Only one concurrent
+        // request can successfully consume an unused token.
+        const consumed =
+            await transaction.passwordResetToken.updateMany({
+                where: {
+                    id: resetToken.id,
+                    tokenHash: input.tokenHash,
+                    consumedAt: null,
+                    expiresAt: {
+                        gt: input.now,
+                    },
+                },
+                data: {
+                    consumedAt: input.now,
+                },
+            });
+
+        if (consumed.count !== 1) {
+            return false;
+        }
+
+        // Update the password only after successful token consumption.
+        await transaction.user.update({
+            where: {
+                id: resetToken.userId,
+            },
+            data: {
+                passwordHash: input.passwordHash,
+            },
+        });
+
+        // Revoke every refresh session belonging to this user.
+        await transaction.refreshToken.updateMany({
+            where: {
+                userId: resetToken.userId,
+                revokedAt: null,
+            },
+            data: {
+                revokedAt: input.now,
+            },
+        });
+
+        return true;
+    });
+}
