@@ -40,6 +40,7 @@ vi.mock("../../src/lib/prisma.js", () => ({
         refreshToken: {
             create: refreshTokenCreateMock,
             findUnique: refreshTokenFindUniqueMock,
+            updateMany: refreshTokenUpdateManyMock,
         },
         $transaction: prismaTransactionMock,
     },
@@ -48,6 +49,7 @@ vi.mock("../../src/lib/prisma.js", () => ({
 import {
     createRefreshToken,
     findRefreshTokenByHash,
+    revokeRefreshTokenFamily,
     rotateRefreshToken,
 } from "../../src/modules/auth/auth.repository.js";
 
@@ -256,5 +258,56 @@ describe("rotateRefreshToken", () => {
         prismaTransactionMock.mockRejectedValue(databaseError);
 
         await expect(rotateRefreshToken(input)).rejects.toBe(databaseError);
+    });
+});
+
+describe("revokeRefreshTokenFamily", () => {
+    const familyId = "22222222-2222-4222-8222-222222222222";
+    const revokedAt = new Date("2026-11-01T00:00:00.000Z");
+
+    beforeEach(() => {
+        refreshTokenUpdateManyMock.mockReset();
+    });
+
+    it("revokes all unrevoked tokens in the specified family", async () => {
+        refreshTokenUpdateManyMock.mockResolvedValue({ count: 3 });
+
+        const result = await revokeRefreshTokenFamily(
+            familyId,
+            revokedAt,
+        );
+
+        expect(refreshTokenUpdateManyMock).toHaveBeenCalledWith({
+            where: {
+                familyId,
+                revokedAt: null,
+            },
+            data: {
+                revokedAt,
+            },
+        });
+
+        expect(result).toEqual({ count: 3 });
+    });
+
+    it("returns zero when no unrevoked tokens match the family", async () => {
+        refreshTokenUpdateManyMock.mockResolvedValue({ count: 0 });
+
+        const result = await revokeRefreshTokenFamily(
+            familyId,
+            revokedAt,
+        );
+
+        expect(result).toEqual({ count: 0 });
+    });
+
+    it("propagates database errors", async () => {
+        const databaseError = new Error("Database unavailable");
+
+        refreshTokenUpdateManyMock.mockRejectedValue(databaseError);
+
+        await expect(
+            revokeRefreshTokenFamily(familyId, revokedAt),
+        ).rejects.toBe(databaseError);
     });
 });

@@ -151,3 +151,18 @@ export async function rotateRefreshToken(input: RotateRefreshTokenInput) {
         return replacement;
     });
 }
+
+export async function revokeRefreshTokenFamily(
+    familyId: string,
+    revokedAt: Date,
+) {
+    return prisma.refreshToken.updateMany({
+        where: {
+            familyId,
+            revokedAt: null,
+        },
+        data: {
+            revokedAt,
+        },
+    });
+}
