@@ -33,7 +33,10 @@ vi.mock("../../src/modules/auth/auth.repository.js", () => ({
 }));
 
 import { AppError } from "../../src/common/errors/app-error.js";
-import { refreshUserSession } from "../../src/modules/auth/auth.service.js";
+import {
+    logoutUser,
+    refreshUserSession,
+} from "../../src/modules/auth/auth.service.js";
 
 const now = new Date();
 const validToken = {
@@ -177,5 +180,64 @@ describe("refreshUserSession", () => {
                 "Please sign in to continue.",
             );
         }
+    });
+});
+
+describe("logoutUser", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        findRefreshTokenByHashMock.mockResolvedValue({
+            ...validToken,
+        });
+        revokeRefreshTokenFamilyMock.mockResolvedValue({ count: 1 });
+    });
+
+    it("revokes the session family for a valid refresh token", async () => {
+        await logoutUser({
+            refreshToken: "raw-refresh-token",
+        });
+
+        const expectedHash = await import("node:crypto").then(
+            ({ createHash }) =>
+                createHash("sha256")
+                    .update("raw-refresh-token")
+                    .digest("hex"),
+        );
+
+        expect(findRefreshTokenByHashMock).toHaveBeenCalledWith(
+            expectedHash,
+        );
+
+        expect(revokeRefreshTokenFamilyMock).toHaveBeenCalledWith(
+            "family-id",
+            expect.any(Date),
+        );
+    });
+
+    it("rejects an unknown refresh token", async () => {
+        findRefreshTokenByHashMock.mockResolvedValue(null);
+
+        await expect(
+            logoutUser({
+                refreshToken: "unknown-refresh-token",
+            }),
+        ).rejects.toMatchObject({
+            statusCode: 401,
+            code: "UNAUTHENTICATED",
+        });
+
+        expect(revokeRefreshTokenFamilyMock).not.toHaveBeenCalled();
+    });
+
+    it("propagates repository errors during logout", async () => {
+        revokeRefreshTokenFamilyMock.mockRejectedValue(
+            new Error("Database unavailable"),
+        );
+
+        await expect(
+            logoutUser({
+                refreshToken: "raw-refresh-token",
+            }),
+        ).rejects.toThrow("Database unavailable");
     });
 });

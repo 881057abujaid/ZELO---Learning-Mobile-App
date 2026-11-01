@@ -167,3 +167,17 @@ export async function refreshUserSession(input: RefreshInput) {
         expiresIn: 900,
     };
 }
+
+export async function logoutUser(input: RefreshInput): Promise<void> {
+    const tokenHash = createHash("sha256")
+        .update(input.refreshToken)
+        .digest("hex");
+
+    const storedToken = await findRefreshTokenByHash(tokenHash);
+
+    if (!storedToken) {
+        throw unauthenticatedError();
+    }
+
+    await revokeRefreshTokenFamily(storedToken.familyId, new Date());
+}

@@ -6,6 +6,7 @@ import type {
 } from "./auth.validation.js";
 import {
     loginUser,
+    logoutUser,
     refreshUserSession,
     registerUser,
 } from "./auth.service.js";
@@ -60,6 +61,27 @@ export const refresh: RequestHandler = async (
         res.status(200).json({
             success: true,
             data: result,
+        });
+    } catch (error: unknown) {
+        next(error);
+    }
+};
+
+export const logout: RequestHandler = async (
+    req,
+    res,
+    next,
+) => {
+    try {
+        const input = req.body as RefreshInput;
+
+        await logoutUser(input);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Logged out successfully.",
+            },
         });
     } catch (error: unknown) {
         next(error);

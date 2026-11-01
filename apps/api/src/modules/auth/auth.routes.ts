@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
-import { register, login, refresh } from "./auth.controller.js";
+import {
+    register,
+    login,
+    refresh,
+    logout,
+} from "./auth.controller.js";
 import {
     registrationSchema,
     loginSchema,
@@ -53,6 +58,21 @@ const refreshRateLimit = rateLimit({
     },
 });
 
+// Provisional abuse protection; revisit the threshold before production.
+const logoutRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: {
+            code: "RATE_LIMITED",
+            message: "Too many logout attempts. Please try again later.",
+        },
+    },
+});
+
 authRouter.post(
     "/register",
     registrationRateLimit,
@@ -72,6 +92,13 @@ authRouter.post(
     refreshRateLimit,
     validateRequest(refreshSchema),
     refresh,
+);
+
+authRouter.post(
+    "/logout",
+    logoutRateLimit,
+    validateRequest(refreshSchema),
+    logout,
 );
 
 export default authRouter;
