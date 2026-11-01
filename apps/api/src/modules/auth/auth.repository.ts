@@ -37,3 +37,117 @@ export async function createUser(input: CreateUserInput) {
         throw error;
     }
 }
+
+interface CreateRefreshTokenInput {
+    userId: string;
+    familyId: string;
+    tokenHash: string;
+    expiresAt: Date;
+}
+
+export async function createRefreshToken(input: CreateRefreshTokenInput) {
+    return prisma.refreshToken.create({
+        data: {
+            userId: input.userId,
+            familyId: input.familyId,
+            tokenHash: input.tokenHash,
+            expiresAt: input.expiresAt,
+        },
+        select: {
+            id: true,
+            userId: true,
+            familyId: true,
+            tokenHash: true,
+            createdAt: true,
+            expiresAt: true,
+            consumedAt: true,
+            revokedAt: true,
+            replacedByTokenId: true,
+        },
+    });
+}
+
+export async function findRefreshTokenByHash(tokenHash: string) {
+    return prisma.refreshToken.findUnique({
+        where: {
+            tokenHash,
+        },
+        select: {
+            id: true,
+            userId: true,
+            familyId: true,
+            tokenHash: true,
+            createdAt: true,
+            expiresAt: true,
+            consumedAt: true,
+            revokedAt: true,
+            replacedByTokenId: true,
+        },
+    });
+}
+
+interface RotateRefreshTokenInput {
+    currentTokenId: string;
+    replacementToken: {
+        userId: string;
+        familyId: string;
+        tokenHash: string;
+        expiresAt: Date;
+    };
+    consumedAt: Date;
+}
+
+export async function rotateRefreshToken(input: RotateRefreshTokenInput) {
+    return prisma.$transaction(async (transaction) => {
+        const consumedToken = await transaction.refreshToken.updateMany({
+            where: {
+                id: input.currentTokenId,
+                userId: input.replacementToken.userId,
+                familyId: input.replacementToken.familyId,
+                consumedAt: null,
+                revokedAt: null,
+                expiresAt: {
+                    gt: input.consumedAt,
+                },
+            },
+            data: {
+                consumedAt: input.consumedAt,
+            },
+        });
+
+        if (consumedToken.count !== 1) {
+            return null;
+        }
+
+        const replacement = await transaction.refreshToken.create({
+            data: {
+                userId: input.replacementToken.userId,
+                familyId: input.replacementToken.familyId,
+                tokenHash: input.replacementToken.tokenHash,
+                expiresAt: input.replacementToken.expiresAt,
+            },
+            select: {
+                id: true,
+                userId: true,
+                familyId: true,
+                tokenHash: true,
+                createdAt: true,
+                expiresAt: true,
+                consumedAt: true,
+                revokedAt: true,
+                replacedByTokenId: true,
+            },
+        });
+
+        await transaction.refreshToken.update({
+            where: {
+                id: input.currentTokenId,
+            },
+            data: {
+                replacedByTokenId: replacement.id,
+            },
+        });
+
+        return replacement;
+    });
+}
