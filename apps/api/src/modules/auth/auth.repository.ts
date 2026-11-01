@@ -166,3 +166,17 @@ export async function revokeRefreshTokenFamily(
         },
     });
 }
+
+export async function findUserForLogin(emailNormalized: string) {
+    return prisma.user.findUnique({
+        where: {
+            emailNormalized,
+        },
+        select: {
+            id: true,
+            email: true,
+            passwordHash: true,
+            createdAt: true,
+        },
+    });
+}

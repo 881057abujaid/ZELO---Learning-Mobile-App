@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
-import { register } from "./auth.controller.js";
-import { registrationSchema } from "./auth.validation.js";
+import { register, login } from "./auth.controller.js";
+import { registrationSchema, loginSchema } from "./auth.validation.js";
 import { validateRequest } from "../../middleware/validate-request.js";
 
 const authRouter = Router();
@@ -20,11 +20,32 @@ const registrationRateLimit = rateLimit({
     },
 });
 
+const loginRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: {
+            code: "RATE_LIMITED",
+            message: "Too many login attempts. Please try again later.",
+        },
+    },
+});
+
 authRouter.post(
     "/register",
     registrationRateLimit,
     validateRequest(registrationSchema),
     register,
+);
+
+authRouter.post(
+    "/login",
+    loginRateLimit,
+    validateRequest(loginSchema),
+    login,
 );
 
 export default authRouter;
