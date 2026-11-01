@@ -37,3 +37,14 @@ export const loginSchema = z
     .strict();
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const refreshSchema = z
+    .object({
+        refreshToken: z
+            .string()
+            .min(1)
+            .max(512),
+    })
+    .strict();
+
+export type RefreshInput = z.infer<typeof refreshSchema>;
