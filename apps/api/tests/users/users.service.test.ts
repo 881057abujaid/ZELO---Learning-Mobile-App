@@ -1,3 +1,4 @@
+import { Prisma } from "../../generated/prisma/client.js";
 import {
     beforeEach,
     describe,
@@ -6,15 +7,23 @@ import {
     vi,
 } from "vitest";
 
-const { findUserProfileByIdMock } = vi.hoisted(() => ({
+const {
+    findUserProfileByIdMock,
+    updateUserProfileMock,
+} = vi.hoisted(() => ({
     findUserProfileByIdMock: vi.fn(),
+    updateUserProfileMock: vi.fn(),
 }));
 
 vi.mock("../../src/modules/users/users.repository.js", () => ({
     findUserProfileById: findUserProfileByIdMock,
+    updateUserProfile: updateUserProfileMock,
 }));
 
-import { getMyProfile } from "../../src/modules/users/users.service.js";
+import {
+    getMyProfile,
+    updateMyProfile,
+} from "../../src/modules/users/users.service.js";
 
 const TEST_USER_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -32,6 +41,7 @@ const mockUser = {
 describe("getMyProfile", () => {
     beforeEach(() => {
         findUserProfileByIdMock.mockReset();
+        updateUserProfileMock.mockReset();
     });
 
     it("returns the permitted fields for an existing user", async () => {
@@ -106,5 +116,94 @@ describe("getMyProfile", () => {
         findUserProfileByIdMock.mockRejectedValue(databaseError);
 
         await expect(getMyProfile(TEST_USER_ID)).rejects.toBe(databaseError);
+    });
+});
+
+describe("updateMyProfile", () => {
+    beforeEach(() => {
+        updateUserProfileMock.mockReset();
+    });
+
+    it("updates the authenticated user's profile", async () => {
+        const input = {
+            username: "student_01",
+            avatarKey: "girl_01",
+            bio: "Learning to code.",
+        } as const;
+
+        const updatedProfile = {
+            username: "student_01",
+            avatarKey: "girl_01",
+            bio: "Learning to code.",
+        } as const;
+
+        updateUserProfileMock.mockResolvedValue(updatedProfile);
+
+        const result = await updateMyProfile(TEST_USER_ID, input);
+
+        expect(updateUserProfileMock).toHaveBeenCalledWith(
+            TEST_USER_ID,
+            input,
+        );
+
+        expect(result).toEqual(updatedProfile);
+    });
+
+    it("maps duplicate username conflicts to HTTP 409", async () => {
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
+            "Unique constraint failed on the usernameNormalized field.",
+            {
+                code: "P2002",
+                clientVersion: "7.10.1",
+                meta: {
+                    target: ["usernameNormalized"],
+                },
+            },
+        );
+
+        updateUserProfileMock.mockRejectedValue(prismaError);
+
+        await expect(
+            updateMyProfile(TEST_USER_ID, {
+                username: "student_01",
+            }),
+        ).rejects.toMatchObject({
+            statusCode: 409,
+            code: "USERNAME_TAKEN",
+            message: "This username is already in use.",
+        });
+    });
+
+    it("propagates unexpected repository errors", async () => {
+        const databaseError = new Error("Database connection failed");
+
+        updateUserProfileMock.mockRejectedValue(databaseError);
+
+        await expect(
+            updateMyProfile(TEST_USER_ID, {
+                bio: "Learning to code.",
+            }),
+        ).rejects.toBe(databaseError);
+    });
+
+    it("propagates unrelated unique constraint errors", async () => {
+        const prismaError = new Prisma.PrismaClientKnownRequestError(
+            "Unique constraint failed on another field.",
+            {
+                code: "P2002",
+                clientVersion: "7.10.1",
+                meta: {
+                    target: ["someOtherField"],
+                },
+            },
+        );
+
+        updateUserProfileMock.mockRejectedValue(prismaError);
+
+        await expect(
+            updateMyProfile(TEST_USER_ID, {
+                username: "student_01",
+            }),
+        ).rejects.toBe(prismaError);
     });
 });
