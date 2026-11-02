@@ -6,6 +6,14 @@ export interface AuthUser {
     createdAt: string;
 }
 
+export interface AuthProfile extends AuthUser {
+    profile: {
+        username: string | null;
+        avatarKey: string | null;
+        bio: string | null;
+    };
+}
+
 export interface RegisterCredentials {
     email: string;
     password: string;
@@ -87,5 +95,16 @@ export function logoutAuthSession(
     return apiRequest<LogoutResponse>("/auth/logout", {
         method: "POST",
         body: { refreshToken },
+    });
+}
+
+/**
+ * Retrieves the authenticated learner's current profile.
+ */
+export function getMyProfile(
+    accessToken: string,
+): Promise<AuthProfile> {
+    return apiRequest<AuthProfile>("/users/me", {
+        accessToken,
     });
 }
