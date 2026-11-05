@@ -10,13 +10,20 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { Link, Redirect } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
 import { useAuth } from "../../../lib/auth/auth-context";
 import { colors } from "../../../theme/colors";
+import { BrandLogo } from "../../../components/branding/BrandLogo";
+import { Button } from "../../../components/ui/Button";
+import { BackButton } from "../../../components/ui/BackButton";
 import { styles } from "./LoginScreen.styles";
 
 export default function LoginScreen() {
+    const router = useRouter();
+
     const { state, retryRestore, login } = useAuth();
 
     const [email, setEmail] = useState("");
@@ -85,7 +92,11 @@ export default function LoginScreen() {
     if (state.status === "loading" && !isSubmitting) {
         return (
             <View style={styles.centeredState}>
-                <ActivityIndicator size="large" color={colors.primary} />
+                <ActivityIndicator
+                    size="large"
+                    color={colors.primary}
+                />
+
                 <Text style={styles.stateMessage}>
                     Checking your session...
                 </Text>
@@ -96,6 +107,10 @@ export default function LoginScreen() {
     if (state.status === "error" && !isSubmitting) {
         return (
             <View style={styles.centeredState}>
+                <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>!</Text>
+                </View>
+
                 <Text style={styles.stateTitle}>
                     Unable to restore session
                 </Text>
@@ -118,255 +133,277 @@ export default function LoginScreen() {
     }
 
     return (
-        <KeyboardAvoidingView
+        <SafeAreaView
             style={styles.screen}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            edges={["top", "bottom"]}
         >
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
+            <KeyboardAvoidingView
+                style={styles.keyboardAvoiding}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <View style={styles.container}>
-                    <Link href="/" asChild>
-                        <Pressable
-                            style={styles.backButton}
-                            accessibilityRole="button"
-                            accessibilityLabel="Back to home"
-                        >
-                            <Text style={styles.backArrow}>‹</Text>
-                        </Pressable>
-                    </Link>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.container}>
+                        <BackButton
+                            onPress={() => router.replace("/")}
+                            disabled={isSubmitting}
+                            accessibilityLabel="Back to welcome screen"
+                        />
 
-                    <View style={styles.brand}>
-                        <Text style={styles.brandName}>ZELO</Text>
-                        <Text style={styles.tagline}>
-                            Learn. Practice. Build.
-                        </Text>
-                    </View>
-
-                    <View style={styles.heading}>
-                        <Text style={styles.title}>
-                            Welcome Back!
-                        </Text>
-
-                        <Text style={styles.subtitle}>
-                            Log in to continue your learning journey.
-                        </Text>
-                    </View>
-
-                    <View style={styles.form}>
-                        <Text style={styles.label}>
-                            Email Address
-                        </Text>
-
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.inputIcon}>
-                                ✉
-                            </Text>
-
-                            <TextInput
-                                style={styles.input}
-                                value={email}
-                                onChangeText={(value) => {
-                                    setEmail(value);
-                                    setValidationError("");
-                                    setLoginError("");
-                                }}
-                                placeholder="Enter your email"
-                                placeholderTextColor={colors.inputPlaceholder}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                autoComplete="email"
-                                textContentType="emailAddress"
-                                editable={!isSubmitting}
-                                accessibilityLabel="Email address"
-                                returnKeyType="next"
+                        <View style={styles.brand}>
+                            <BrandLogo
+                                variant="tagline"
+                                width={220}
                             />
                         </View>
 
-                        <Text style={[styles.label, styles.passwordLabel]}>
-                            Password
-                        </Text>
-
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.inputIcon}>
-                                ♙
+                        <View style={styles.heading}>
+                            <Text style={styles.title}>
+                                Welcome back!
                             </Text>
 
-                            <TextInput
-                                style={styles.input}
-                                value={password}
-                                onChangeText={(value) => {
-                                    setPassword(value);
-                                    setValidationError("");
-                                    setLoginError("");
-                                }}
-                                placeholder="Enter your password"
-                                placeholderTextColor={colors.inputPlaceholder}
-                                secureTextEntry={!showPassword}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                autoComplete="current-password"
-                                textContentType="password"
-                                editable={!isSubmitting}
-                                accessibilityLabel="Password"
-                                returnKeyType="done"
-                                onSubmitEditing={() => {
-                                    void handleLogin();
-                                }}
-                            />
+                            <Text style={styles.subtitle}>
+                                Your coding adventure is waiting.
+                                {"\n"}
+                                Let&apos;s pick up where you left off.
+                            </Text>
+                        </View>
 
+                        <View style={styles.form}>
+                            <Text style={styles.label}>
+                                Email address
+                            </Text>
+
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    value={email}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setValidationError("");
+                                        setLoginError("");
+                                    }}
+                                    placeholder="you@example.com"
+                                    placeholderTextColor={
+                                        colors.inputPlaceholder
+                                    }
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    autoComplete="email"
+                                    textContentType="emailAddress"
+                                    editable={!isSubmitting}
+                                    accessibilityLabel="Email address"
+                                    returnKeyType="next"
+                                />
+                            </View>
+
+                            <Text style={styles.label}>
+                                Password
+                            </Text>
+
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    value={password}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setValidationError("");
+                                        setLoginError("");
+                                    }}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor={
+                                        colors.inputPlaceholder
+                                    }
+                                    secureTextEntry={!showPassword}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    autoComplete="current-password"
+                                    textContentType="password"
+                                    editable={!isSubmitting}
+                                    accessibilityLabel="Password"
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => {
+                                        void handleLogin();
+                                    }}
+                                />
+
+                                <Pressable
+                                    style={styles.visibilityButton}
+                                    onPress={() => {
+                                        setShowPassword((visible) => !visible);
+                                    }}
+                                    disabled={isSubmitting}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={
+                                        showPassword
+                                            ? "Hide password"
+                                            : "Show password"
+                                    }
+                                >
+                                    <Text style={styles.visibilityText}>
+                                        {showPassword ? "Hide" : "Show"}
+                                    </Text>
+                                </Pressable>
+                            </View>
+
+                            <View style={styles.optionsRow}>
+                                <Pressable
+                                    style={styles.rememberOption}
+                                    onPress={() => {
+                                        setRememberMe((checked) => !checked);
+                                    }}
+                                    accessibilityRole="checkbox"
+                                    accessibilityState={{
+                                        checked: rememberMe,
+                                    }}
+                                    disabled={isSubmitting}
+                                >
+                                    <View
+                                        style={[
+                                            styles.checkbox,
+                                            rememberMe &&
+                                            styles.checkboxChecked,
+                                        ]}
+                                    >
+                                        {rememberMe ? (
+                                            <Text style={styles.checkmark}>
+                                                ✓
+                                            </Text>
+                                        ) : null}
+                                    </View>
+
+                                    <Text style={styles.rememberText}>
+                                        Remember me
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    onPress={() => {
+                                        showUnavailableFeature(
+                                            "Password recovery",
+                                        );
+                                    }}
+                                    accessibilityRole="button"
+                                    disabled={isSubmitting}
+                                >
+                                    <Text style={styles.linkText}>
+                                        Forgot password?
+                                    </Text>
+                                </Pressable>
+                            </View>
+
+                            {validationError ? (
+                                <Text
+                                    style={styles.errorText}
+                                    accessibilityRole="alert"
+                                >
+                                    {validationError}
+                                </Text>
+                            ) : null}
+
+                            <View style={styles.errorButtonSpacing}>
+                                {loginError ? (
+                                    <Text
+                                        style={styles.errorText}
+                                        accessibilityRole="alert"
+                                    >
+                                        {loginError}
+                                    </Text>
+                                ) : null}
+
+                                <Button
+                                    title="Sign In"
+                                    variant="primary"
+                                    onPress={() => void handleLogin()}
+                                    loading={isSubmitting}
+                                    accessibilityLabel="Sign in to ZELO"
+                                    rightIcon={
+                                        <Text style={styles.buttonArrow}>
+                                            →
+                                        </Text>
+                                    }
+                                />
+                            </View>
+
+                            <Text style={styles.secureNote}>
+                                Your learning journey, one step at a time.
+                            </Text>
+                        </View>
+
+                        <View style={styles.divider}>
+                            <View style={styles.dividerLine} />
+
+                            <Text style={styles.dividerText}>
+                                OR CONTINUE WITH
+                            </Text>
+
+                            <View style={styles.dividerLine} />
+                        </View>
+
+                        <View style={styles.socialRow}>
                             <Pressable
-                                style={styles.visibilityButton}
+                                style={styles.socialButton}
                                 onPress={() => {
-                                    setShowPassword((visible) => !visible);
+                                    showUnavailableFeature("Google sign-in");
                                 }}
                                 disabled={isSubmitting}
                                 accessibilityRole="button"
-                                accessibilityLabel={
-                                    showPassword
-                                        ? "Hide password"
-                                        : "Show password"
-                                }
                             >
-                                <Text style={styles.visibilityText}>
-                                    {showPassword ? "Hide" : "Show"}
-                                </Text>
-                            </Pressable>
-                        </View>
+                                <FontAwesome
+                                    name="google"
+                                    size={19}
+                                    color="#4285F4"
+                                />
 
-                        <View style={styles.optionsRow}>
-                            <Pressable
-                                style={styles.rememberOption}
-                                onPress={() => {
-                                    setRememberMe((checked) => !checked);
-                                }}
-                                accessibilityRole="checkbox"
-                                accessibilityState={{
-                                    checked: rememberMe,
-                                }}
-                            >
-                                <View
-                                    style={[
-                                        styles.checkbox,
-                                        rememberMe && styles.checkboxChecked,
-                                    ]}
-                                >
-                                    {rememberMe ? (
-                                        <Text style={styles.checkmark}>
-                                            ✓
-                                        </Text>
-                                    ) : null}
-                                </View>
-
-                                <Text style={styles.rememberText}>
-                                    Remember me
+                                <Text style={styles.socialText}>
+                                    Google
                                 </Text>
                             </Pressable>
 
                             <Pressable
+                                style={styles.socialButton}
                                 onPress={() => {
-                                    showUnavailableFeature("Password recovery");
+                                    showUnavailableFeature("Apple sign-in");
                                 }}
+                                disabled={isSubmitting}
                                 accessibilityRole="button"
                             >
-                                <Text style={styles.linkText}>
-                                    Forgot Password?
+                                <Ionicons
+                                    name="logo-apple"
+                                    size={22}
+                                    color="#000000"
+                                />
+
+                                <Text style={styles.socialText}>
+                                    Apple
                                 </Text>
                             </Pressable>
                         </View>
 
-                        {validationError ? (
-                            <Text
-                                style={styles.errorText}
-                                accessibilityRole="alert"
-                            >
-                                {validationError}
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>
+                                New to ZELO?
                             </Text>
-                        ) : null}
 
-                        {loginError ? (
-                            <Text
-                                style={styles.errorText}
-                                accessibilityRole="alert"
+                            <Pressable
+                                onPress={() => {
+                                    showUnavailableFeature("Registration");
+                                }}
+                                accessibilityRole="button"
+                                disabled={isSubmitting}
                             >
-                                {loginError}
-                            </Text>
-                        ) : null}
-
-                        <Pressable
-                            style={[
-                                styles.primaryButton,
-                                isSubmitting && styles.disabledButton,
-                            ]}
-                            onPress={() => void handleLogin()}
-                            disabled={isSubmitting}
-                            accessibilityRole="button"
-                        >
-                            {isSubmitting ? (
-                                <ActivityIndicator color={colors.white} />
-                            ) : (
-                                <Text style={styles.primaryButtonText}>
-                                    Log In →
+                                <Text style={styles.linkText}>
+                                    Create an account
                                 </Text>
-                            )}
-                        </Pressable>
+                            </Pressable>
+                        </View>
                     </View>
-
-                    <View style={styles.divider}>
-                        <View style={styles.dividerLine} />
-
-                        <Text style={styles.dividerText}>
-                            OR CONTINUE WITH
-                        </Text>
-
-                        <View style={styles.dividerLine} />
-                    </View>
-
-                    <View style={styles.socialRow}>
-                        <Pressable
-                            style={styles.socialButton}
-                            onPress={() => {
-                                showUnavailableFeature("Google sign-in");
-                            }}
-                            accessibilityRole="button"
-                        >
-                            <Text style={styles.socialIcon}>G</Text>
-                            <Text style={styles.socialText}>Google</Text>
-                        </Pressable>
-
-                        <Pressable
-                            style={styles.socialButton}
-                            onPress={() => {
-                                showUnavailableFeature("Apple sign-in");
-                            }}
-                            accessibilityRole="button"
-                        >
-                            <Text style={styles.socialIcon}>●</Text>
-                            <Text style={styles.socialText}>Apple</Text>
-                        </Pressable>
-                    </View>
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>
-                            Don&apos;t have an account?
-                        </Text>
-
-                        <Pressable
-                            onPress={() => {
-                                showUnavailableFeature("Registration");
-                            }}
-                            accessibilityRole="button"
-                        >
-                            <Text style={styles.linkText}>
-                                Sign Up
-                            </Text>
-                        </Pressable>
-                    </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }

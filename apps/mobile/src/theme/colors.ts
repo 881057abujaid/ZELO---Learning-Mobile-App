@@ -1,31 +1,44 @@
+/**
+ * ZELO brand palette.
+ * Clean ivory/white surfaces with violet actions and green success accents,
+ * aligned with the approved ZELO 2.0 design-system direction.
+ */
 export const colors = {
     // Brand
-    primary: "#6955E8",
-    primaryDark: "#5540D0",
-    primaryLight: "#F0EDFF",
+    primary: "#7357E8",
+    primaryPressed: "#5F43D2",
+    primarySoft: "#F0EDFF",
+    primaryTint: "#F7F5FF",
+    brandPurple: "#4B087F",
+    brandPurpleDeep: "#28004E",
+    brandViolet: "#762BFF",
+    brandLime: "#A8FF00",
+    brandGreen: "#20D600",
 
-    // Backgrounds
-    background: "#FAF9FF",
+    // App surfaces
+    background: "#FBFAFF",
     surface: "#FFFFFF",
     surfaceSecondary: "#F5F2FF",
+    surfaceTint: "#F8F7FF",
 
     // Text
-    textPrimary: "#292541",
-    textSecondary: "#858098",
-    textMuted: "#9690A9",
+    textPrimary: "#201447",
+    textSecondary: "#626080",
+    textMuted: "#85819A",
     textInverse: "#FFFFFF",
 
     // Borders and inputs
-    border: "#E5E1F1",
+    border: "#E3DFF2",
+    borderStrong: "#C9C1E8",
     inputBackground: "#FFFFFF",
-    inputPlaceholder: "#9995AA",
+    inputPlaceholder: "#918CA8",
 
     // Feedback
-    success: "#238653",
-    successBackground: "#E8F7EE",
+    success: "#168653",
+    successBackground: "#E8F8F0",
     error: "#C62845",
     errorBackground: "#FDECEF",
-    warning: "#B7791F",
+    warning: "#9A6500",
     warningBackground: "#FFF4DE",
 
     // General

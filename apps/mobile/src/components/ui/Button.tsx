@@ -6,6 +6,7 @@ import {
 } from "react-native";
 
 import { styles } from "./Button.styles";
+import { colors } from "../../theme/colors";
 
 export type ButtonVariant =
     | "primary"
@@ -56,11 +57,7 @@ export function Button({
             {loading ? (
                 <ActivityIndicator
                     size="small"
-                    color={
-                        variant === "primary"
-                            ? "#FFFFFF"
-                            : "#7357E8"
-                    }
+                    color={variant === "primary" ? colors.white : colors.primary}
                 />
             ) : (
                 <>
