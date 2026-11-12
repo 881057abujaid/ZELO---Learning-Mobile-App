@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ZELO 2.0",
+    "name": "ZELO",
     "slug": "zelo-2-0",
     "version": "1.0.0",
     "scheme": "zelo",
@@ -9,19 +9,18 @@
       "android"
     ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding/zelo-app-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/branding/zelo-adaptive-foreground.png",
+        "backgroundColor": "#25005F"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.zelo20"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,7 +28,20 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/branding/zelo-wordmark-tagline.png",
+          "imageWidth": 260,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "backgroundColor": "#FFFFFF"
+          }
+        }
+      ],
+      "./plugins/withCmakeObjectPath"
     ]
   }
 }
