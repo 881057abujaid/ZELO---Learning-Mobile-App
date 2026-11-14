@@ -417,9 +417,7 @@ export default function LoginScreen() {
                             </Text>
 
                             <Pressable
-                                onPress={() => {
-                                    showUnavailableFeature("Registration");
-                                }}
+                                onPress={() => router.push("/register")}
                                 accessibilityRole="button"
                                 disabled={isSubmitting}
                             >
