@@ -10,6 +10,7 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -17,7 +18,6 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../lib/auth/auth-context";
 import { colors } from "../../../theme/colors";
 import { BrandLogo } from "../../../components/branding/BrandLogo";
-import { Button } from "../../../components/ui/Button";
 import { BackButton } from "../../../components/ui/BackButton";
 import { styles } from "./LoginScreen.styles";
 
@@ -156,7 +156,7 @@ export default function LoginScreen() {
                         <View style={styles.brand}>
                             <BrandLogo
                                 variant="tagline"
-                                width={220}
+                                width={190}
                             />
                         </View>
 
@@ -315,18 +315,45 @@ export default function LoginScreen() {
                                     </Text>
                                 ) : null}
 
-                                <Button
-                                    title="Sign In"
-                                    variant="primary"
+                                <Pressable
                                     onPress={() => void handleLogin()}
-                                    loading={isSubmitting}
+                                    disabled={isSubmitting}
+                                    accessibilityRole="button"
                                     accessibilityLabel="Sign in to ZELO"
-                                    rightIcon={
-                                        <Text style={styles.buttonArrow}>
-                                            →
-                                        </Text>
-                                    }
-                                />
+                                    accessibilityState={{
+                                        disabled: isSubmitting,
+                                        busy: isSubmitting,
+                                    }}
+                                    style={({ pressed }) => [
+                                        styles.primaryButton,
+                                        pressed && !isSubmitting && styles.buttonPressed,
+                                        isSubmitting && styles.disabledButton,
+                                    ]}
+                                >
+                                    <LinearGradient
+                                        colors={["#8B5CF6", "#6428D9"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={styles.gradientPrimaryButton}
+                                    >
+                                        {isSubmitting ? (
+                                            <ActivityIndicator
+                                                size="small"
+                                                color={colors.white}
+                                            />
+                                        ) : (
+                                            <>
+                                                <Text style={styles.primaryButtonText}>
+                                                    Sign In
+                                                </Text>
+
+                                                <Text style={styles.buttonArrow}>
+                                                    →
+                                                </Text>
+                                            </>
+                                        )}
+                                    </LinearGradient>
+                                </Pressable>
                             </View>
 
                             <Text style={styles.secureNote}>

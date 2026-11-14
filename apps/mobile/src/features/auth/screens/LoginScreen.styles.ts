@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import { colors } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
 import { typography } from "../../../theme/typography";
+import { radius } from "../../../theme/shape";
 
 export const styles = StyleSheet.create({
     screen: {
@@ -40,9 +41,9 @@ export const styles = StyleSheet.create({
 
     title: {
         color: colors.textPrimary,
-        fontFamily: typography.family.display,
-        fontSize: typography.size["3xl"],
-        lineHeight: typography.lineHeight["3xl"],
+        fontFamily: typography.family.displayBlack,
+        fontSize: 32,
+        lineHeight: 40,
         textAlign: "center",
     },
 
@@ -50,8 +51,8 @@ export const styles = StyleSheet.create({
         marginTop: spacing.sm,
         color: colors.textSecondary,
         fontFamily: typography.family.body,
-        fontSize: typography.size.sm,
-        lineHeight: typography.lineHeight.md,
+        fontSize: typography.size.md,
+        lineHeight: typography.lineHeight.lg,
         textAlign: "center",
     },
 
@@ -67,24 +68,24 @@ export const styles = StyleSheet.create({
     },
 
     inputContainer: {
-        minHeight: 56,
+        minHeight: 58,
         flexDirection: "row",
         alignItems: "center",
         marginBottom: spacing.lg,
         paddingHorizontal: spacing.lg,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: 16,
+        borderRadius: 18,
         backgroundColor: colors.surface,
     },
 
     input: {
         flex: 1,
-        minHeight: 54,
+        minHeight: 56,
         paddingVertical: spacing.sm,
         color: colors.textPrimary,
         fontFamily: typography.family.body,
-        fontSize: typography.size.sm,
+        fontSize: typography.size.md,
     },
 
     visibilityButton: {
@@ -164,26 +165,45 @@ export const styles = StyleSheet.create({
     },
 
     primaryButton: {
+        width: "100%",
+        minHeight: 58,
+        marginTop: spacing.xl,
+        borderRadius: radius.full,
+        overflow: "hidden",
+        elevation: 4,
+        shadowColor: colors.brandPurpleDeep,
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+
+    gradientPrimaryButton: {
         minHeight: 58,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: spacing.sm,
-        marginTop: spacing.xl,
-        borderRadius: 17,
-        backgroundColor: colors.primary,
+        paddingHorizontal: spacing.xl,
     },
 
     primaryButtonText: {
         color: colors.white,
-        fontFamily: typography.family.display,
-        fontSize: typography.size.lg,
+        fontFamily: typography.family.bodyExtraBold,
+        fontSize: typography.size.md,
     },
 
     buttonArrow: {
+        marginLeft: spacing.xs,
         color: colors.white,
-        fontFamily: typography.family.bodyBold,
+        fontFamily: typography.family.bodyExtraBold,
         fontSize: typography.size.xl,
+    },
+
+    buttonPressed: {
+        opacity: 0.85,
+        transform: [{ scale: 0.98 }],
     },
 
     disabledButton: {
@@ -226,21 +246,21 @@ export const styles = StyleSheet.create({
 
     socialButton: {
         flex: 1,
-        minHeight: 50,
+        minHeight: 58,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
         gap: spacing.sm,
         borderWidth: 1,
         borderColor: colors.border,
-        borderRadius: 14,
+        borderRadius: 18,
         backgroundColor: colors.surface,
     },
 
     socialText: {
         color: colors.textPrimary,
         fontFamily: typography.family.bodyBold,
-        fontSize: typography.size.sm,
+        fontSize: typography.size.md,
     },
 
     footer: {
