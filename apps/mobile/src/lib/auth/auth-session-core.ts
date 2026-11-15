@@ -5,6 +5,8 @@ import type {
     AuthUser,
     LoginCredentials,
     LoginResponse,
+    UpdateMyProfileInput,
+    UpdateMyProfileResponse,
 } from "./auth-api";
 
 import type { AuthTokens } from "./token-storage";
@@ -36,6 +38,11 @@ export interface AuthSessionDependencies {
     getMyProfile: (
         accessToken: string,
     ) => Promise<AuthProfile>;
+
+    updateMyProfile: (
+        accessToken: string,
+        input: UpdateMyProfileInput,
+    ) => Promise<UpdateMyProfileResponse>;
 }
 
 function isUnauthenticatedError(
@@ -131,6 +138,73 @@ export function createAuthSessionService(
 
                 await dependencies.clearAuthTokens();
                 return null;
+            }
+        },
+
+        async updateMyProfile(
+            input: UpdateMyProfileInput,
+        ): Promise<UpdateMyProfileResponse> {
+            const tokens = await dependencies.getAuthTokens();
+
+            if (!tokens) {
+                throw new Error(
+                    "Your session has expired. Please sign in again.",
+                );
+            }
+
+            try {
+                return await dependencies.updateMyProfile(
+                    tokens.accessToken,
+                    input,
+                );
+            } catch (profileError: unknown) {
+                if (!isUnauthenticatedError(profileError)) {
+                    throw profileError;
+                }
+            }
+
+            let refreshedTokens: {
+                accessToken: string;
+                refreshToken: string;
+            };
+
+            try {
+                refreshedTokens =
+                    await dependencies.refreshAuthSession(
+                        tokens.refreshToken,
+                    );
+            } catch (refreshError: unknown) {
+                if (isUnauthenticatedError(refreshError)) {
+                    await dependencies.clearAuthTokens();
+
+                    throw new Error(
+                        "Your session has expired. Please sign in again.",
+                    );
+                }
+
+                throw refreshError;
+            }
+
+            await dependencies.saveAuthTokens({
+                accessToken: refreshedTokens.accessToken,
+                refreshToken: refreshedTokens.refreshToken,
+            });
+
+            try {
+                return await dependencies.updateMyProfile(
+                    refreshedTokens.accessToken,
+                    input,
+                );
+            } catch (profileError: unknown) {
+                if (isUnauthenticatedError(profileError)) {
+                    await dependencies.clearAuthTokens();
+
+                    throw new Error(
+                        "Your session has expired. Please sign in again.",
+                    );
+                }
+
+                throw profileError;
             }
         },
     };

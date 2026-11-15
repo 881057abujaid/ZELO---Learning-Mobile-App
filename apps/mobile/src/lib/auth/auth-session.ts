@@ -3,6 +3,7 @@ import {
     loginWithEmail,
     logoutAuthSession,
     refreshAuthSession,
+    updateMyProfile,
 } from "./auth-api";
 
 import {
@@ -16,6 +17,7 @@ import { createAuthSessionService } from "./auth-session-core";
 export const {
     loginAndPersistSession,
     restoreSession,
+    updateMyProfile: updateMyProfileSession,
 } = createAuthSessionService({
     loginWithEmail,
     saveAuthTokens,
@@ -24,4 +26,5 @@ export const {
     clearAuthTokens,
     refreshAuthSession,
     getMyProfile,
+    updateMyProfile,
 });

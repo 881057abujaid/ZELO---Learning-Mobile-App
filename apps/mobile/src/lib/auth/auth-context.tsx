@@ -7,11 +7,15 @@ import {
     type ReactNode,
 } from "react";
 
-import type { LoginCredentials } from "./auth-api";
+import type {
+    LoginCredentials,
+    UpdateMyProfileInput,
+} from "./auth-api";
 
 import {
     loginAndPersistSession,
     restoreSession,
+    updateMyProfileSession,
 } from "./auth-session";
 
 import {
@@ -23,6 +27,7 @@ interface AuthContextValue {
     state: AuthState;
     retryRestore: () => Promise<void>;
     login: (credentials: LoginCredentials) => Promise<void>;
+    updateProfile: (input: UpdateMyProfileInput) => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -109,6 +114,59 @@ export function AuthProvider({
         [],
     );
 
+    const authenticatedUserId =
+        state.status === "authenticated"
+            ? state.profile.id
+            : null;
+
+    const updateProfile = useCallback(
+        async (input: UpdateMyProfileInput): Promise<void> => {
+            if (!authenticatedUserId) {
+                throw new Error(
+                    "You must be signed in to update your profile.",
+                );
+            }
+
+            try {
+                const updatedProfile =
+                    await updateMyProfileSession(input);
+
+                setState((currentState) => {
+                    if (
+                        currentState.status !== "authenticated" ||
+                        currentState.profile.id !== authenticatedUserId
+                    ) {
+                        return currentState;
+                    }
+
+                    return {
+                        status: "authenticated",
+                        profile: {
+                            ...currentState.profile,
+                            profile: {
+                                ...currentState.profile.profile,
+                                ...updatedProfile,
+                            },
+                        },
+                    };
+                });
+            } catch (error: unknown) {
+                if (
+                    error instanceof Error &&
+                    error.message ===
+                    "Your session has expired. Please sign in again."
+                ) {
+                    setState({
+                        status: "unauthenticated",
+                    });
+                }
+
+                throw error;
+            }
+        },
+        [authenticatedUserId],
+    );
+
     useEffect(() => {
         let cancelled = false;
 
@@ -129,6 +187,7 @@ export function AuthProvider({
                 state,
                 retryRestore,
                 login,
+                updateProfile,
             }}
         >
             {children}

@@ -87,6 +87,12 @@ function createDependencies(
             },
         }),
 
+        updateMyProfile: async (_accessToken, input) => ({
+            username: input.username ?? null,
+            avatarKey: input.avatarKey ?? null,
+            bio: input.bio ?? null,
+        }),
+
         ...overrides,
     };
 }
@@ -552,6 +558,360 @@ async function main(): Promise<void> {
         );
 
         console.log("PASS: Token persistence failure propagates safely");
+    }
+
+    // Test 11: A valid access token updates the profile.
+    {
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "valid-access-token",
+                    refreshToken: "valid-refresh-token",
+                }),
+                updateMyProfile: async (accessToken, input) => {
+                    assert(
+                        accessToken === "valid-access-token",
+                        "The stored access token should be used.",
+                    );
+
+                    return {
+                        username: input.username ?? null,
+                        avatarKey: input.avatarKey ?? null,
+                        bio: input.bio ?? null,
+                    };
+                },
+            }),
+        );
+
+        const result = await service.updateMyProfile({
+            username: "newlearner",
+        });
+
+        assert(
+            result.username === "newlearner",
+            "The updated username should be returned.",
+        );
+
+        console.log("PASS: Profile updates with a valid access token");
+    }
+
+    // Test 12: An expired access token triggers refresh and update retry.
+    {
+        let updateAttempts = 0;
+        let savedTokens: AuthTokens | undefined;
+
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "expired-access-token",
+                    refreshToken: "valid-refresh-token",
+                }),
+
+                updateMyProfile: async (accessToken, input) => {
+                    updateAttempts += 1;
+
+                    if (updateAttempts === 1) {
+                        throw new ApiError(
+                            "Access token expired",
+                            401,
+                            "UNAUTHENTICATED",
+                        );
+                    }
+
+                    assert(
+                        accessToken === "refreshed-access-token",
+                        "The refreshed access token should be used.",
+                    );
+
+                    return {
+                        username: input.username ?? null,
+                        avatarKey: input.avatarKey ?? null,
+                        bio: input.bio ?? null,
+                    };
+                },
+
+                refreshAuthSession: async (refreshToken) => {
+                    assert(
+                        refreshToken === "valid-refresh-token",
+                        "The stored refresh token should be used.",
+                    );
+
+                    return {
+                        accessToken: "refreshed-access-token",
+                        refreshToken: "rotated-refresh-token",
+                    };
+                },
+
+                saveAuthTokens: async (tokens) => {
+                    savedTokens = tokens;
+                },
+            }),
+        );
+
+        const result = await service.updateMyProfile({
+            username: "refreshedlearner",
+        });
+
+        assert(
+            result.username === "refreshedlearner",
+            "The profile should update after refreshing.",
+        );
+
+        assert(
+            updateAttempts === 2,
+            "The update should be retried exactly once.",
+        );
+
+        assert(
+            savedTokens?.accessToken === "refreshed-access-token",
+            "The refreshed access token should be saved.",
+        );
+
+        assert(
+            savedTokens?.refreshToken === "rotated-refresh-token",
+            "The rotated refresh token should be saved.",
+        );
+
+        console.log("PASS: Expired access token refreshes and retries profile update");
+    }
+
+    // Test 13: An invalid refresh token clears stored credentials.
+    {
+        let clearCalled = false;
+
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "expired-access-token",
+                    refreshToken: "invalid-refresh-token",
+                }),
+
+                updateMyProfile: async () => {
+                    throw new ApiError(
+                        "Access token expired",
+                        401,
+                        "UNAUTHENTICATED",
+                    );
+                },
+
+                refreshAuthSession: async () => {
+                    throw new ApiError(
+                        "Refresh token invalid",
+                        401,
+                        "UNAUTHENTICATED",
+                    );
+                },
+
+                clearAuthTokens: async () => {
+                    clearCalled = true;
+                },
+            }),
+        );
+
+        let errorMessage = "";
+
+        try {
+            await service.updateMyProfile({
+                username: "learner",
+            });
+        } catch (error: unknown) {
+            errorMessage = error instanceof Error
+                ? error.message
+                : "";
+        }
+
+        assert(
+            clearCalled,
+            "Stored credentials should be cleared.",
+        );
+
+        assert(
+            errorMessage.includes("session has expired"),
+            "The user should receive a session expiry message.",
+        );
+
+        console.log("PASS: Invalid refresh token clears credentials");
+    }
+
+    // Test 14: A network error must preserve stored credentials.
+    {
+        const networkError = new ApiError(
+            "Network unavailable",
+            0,
+            "NETWORK_ERROR",
+        );
+
+        let refreshCalled = false;
+        let clearCalled = false;
+
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "stored-access-token",
+                    refreshToken: "stored-refresh-token",
+                }),
+
+                updateMyProfile: async () => {
+                    throw networkError;
+                },
+
+                refreshAuthSession: async () => {
+                    refreshCalled = true;
+
+                    return {
+                        accessToken: "new-access-token",
+                        refreshToken: "new-refresh-token",
+                    };
+                },
+
+                clearAuthTokens: async () => {
+                    clearCalled = true;
+                },
+            }),
+        );
+
+        await expectFailure(
+            () => service.updateMyProfile({
+                username: "learner",
+            }),
+            networkError,
+        );
+
+        assert(
+            !refreshCalled,
+            "Network errors must not trigger token refresh.",
+        );
+
+        assert(
+            !clearCalled,
+            "Credentials must not be cleared after a network error.",
+        );
+
+        console.log("PASS: Network errors preserve profile session credentials");
+    }
+
+    // Test 15: Token persistence failure prevents profile update retry.
+    {
+        const storageError = new Error(
+            "Secure storage unavailable",
+        );
+
+        let updateAttempts = 0;
+        let clearCalled = false;
+
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "expired-access-token",
+                    refreshToken: "valid-refresh-token",
+                }),
+
+                updateMyProfile: async () => {
+                    updateAttempts += 1;
+
+                    throw new ApiError(
+                        "Access token expired",
+                        401,
+                        "UNAUTHENTICATED",
+                    );
+                },
+
+                refreshAuthSession: async () => ({
+                    accessToken: "refreshed-access-token",
+                    refreshToken: "rotated-refresh-token",
+                }),
+
+                saveAuthTokens: async () => {
+                    throw storageError;
+                },
+
+                clearAuthTokens: async () => {
+                    clearCalled = true;
+                },
+            }),
+        );
+
+        await expectFailure(
+            () => service.updateMyProfile({
+                username: "learner",
+            }),
+            storageError,
+        );
+
+        assert(
+            updateAttempts === 1,
+            "The update must not retry if token persistence fails.",
+        );
+
+        assert(
+            !clearCalled,
+            "Credentials must not be cleared after storage failure.",
+        );
+
+        console.log("PASS: Token storage failure prevents update retry");
+    }
+
+    // Test 16: Authentication failure after retry clears credentials.
+    {
+        let updateAttempts = 0;
+        let clearCalled = false;
+
+        const service = createAuthSessionService(
+            createDependencies({
+                getAuthTokens: async () => ({
+                    accessToken: "expired-access-token",
+                    refreshToken: "valid-refresh-token",
+                }),
+
+                updateMyProfile: async () => {
+                    updateAttempts += 1;
+
+                    throw new ApiError(
+                        "Access token expired",
+                        401,
+                        "UNAUTHENTICATED",
+                    );
+                },
+
+                refreshAuthSession: async () => ({
+                    accessToken: "refreshed-access-token",
+                    refreshToken: "rotated-refresh-token",
+                }),
+
+                clearAuthTokens: async () => {
+                    clearCalled = true;
+                },
+            }),
+        );
+
+        let errorMessage = "";
+
+        try {
+            await service.updateMyProfile({
+                username: "learner",
+            });
+        } catch (error: unknown) {
+            errorMessage = error instanceof Error
+                ? error.message
+                : "";
+        }
+
+        assert(
+            updateAttempts === 2,
+            "The profile update should be attempted twice.",
+        );
+
+        assert(
+            clearCalled,
+            "Credentials should be cleared after retry authentication failure.",
+        );
+
+        assert(
+            errorMessage.includes("session has expired"),
+            "The user should receive a session expiry message.",
+        );
+
+        console.log("PASS: Retry authentication failure clears credentials");
     }
 
     console.log("\nAll authentication session tests passed.");

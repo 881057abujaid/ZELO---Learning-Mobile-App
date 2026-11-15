@@ -14,6 +14,18 @@ export interface AuthProfile extends AuthUser {
     };
 }
 
+export interface UpdateMyProfileInput {
+    username?: string;
+    avatarKey?: string | null;
+    bio?: string | null;
+}
+
+export interface UpdateMyProfileResponse {
+    username: string | null;
+    avatarKey: string | null;
+    bio: string | null;
+}
+
 export interface RegisterCredentials {
     email: string;
     password: string;
@@ -106,5 +118,19 @@ export function getMyProfile(
 ): Promise<AuthProfile> {
     return apiRequest<AuthProfile>("/users/me", {
         accessToken,
+    });
+}
+
+/**
+ * Updates the authenticated learner's profile.
+ */
+export function updateMyProfile(
+    accessToken: string,
+    input: UpdateMyProfileInput,
+): Promise<UpdateMyProfileResponse> {
+    return apiRequest<UpdateMyProfileResponse>("/users/me", {
+        method: "PATCH",
+        accessToken,
+        body: input,
     });
 }
