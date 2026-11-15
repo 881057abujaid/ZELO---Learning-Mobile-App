@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -7,7 +8,6 @@ import {
     Text,
     TextInput,
     View,
-    Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -28,6 +28,52 @@ export default function RegisterScreen() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [validationError, setValidationError] = useState("");
+
+    const handleCreateAccount = () => {
+        setValidationError("");
+
+        const normalizedEmail = email.trim();
+
+        // Check empty fields
+        if (!normalizedEmail || !password || !confirmPassword) {
+            setValidationError(
+                "Please fill in all the required fields.",
+            );
+            return;
+        }
+
+        // Validate email format
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(normalizedEmail)) {
+            setValidationError(
+                "Please enter a valid email address.",
+            );
+            return;
+        }
+
+        // Backend password requirements
+        if (password.length < 8 || password.length > 128) {
+            setValidationError(
+                "Password must contain between 8 and 128 characters.",
+            );
+            return;
+        }
+
+        // Confirm password
+        if (password !== confirmPassword) {
+            setValidationError(
+                "Passwords do not match. Please try again.",
+            );
+            return;
+        }
+
+        Alert.alert(
+            "All Set!",
+            "Your details are valid. Account creation will be connected in the next step.",
+        );
+    };
 
     const showComingSoon = () => {
         Alert.alert(
@@ -85,7 +131,10 @@ export default function RegisterScreen() {
                                 <TextInput
                                     style={styles.input}
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setValidationError("");
+                                    }}
                                     placeholder="you@example.com"
                                     placeholderTextColor={colors.inputPlaceholder}
                                     keyboardType="email-address"
@@ -107,7 +156,10 @@ export default function RegisterScreen() {
                                 <TextInput
                                     style={styles.input}
                                     value={password}
-                                    onChangeText={setPassword}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setValidationError("");
+                                    }}
                                     placeholder="Create a password"
                                     placeholderTextColor={colors.inputPlaceholder}
                                     secureTextEntry={!showPassword}
@@ -146,7 +198,10 @@ export default function RegisterScreen() {
                                 <TextInput
                                     style={styles.input}
                                     value={confirmPassword}
-                                    onChangeText={setConfirmPassword}
+                                    onChangeText={(value) => {
+                                        setConfirmPassword(value);
+                                        setValidationError("");
+                                    }}
                                     placeholder="Enter password again"
                                     placeholderTextColor={colors.inputPlaceholder}
                                     secureTextEntry={!showConfirmPassword}
@@ -178,14 +233,24 @@ export default function RegisterScreen() {
                                 </Pressable>
                             </View>
 
+                            {validationError ? (
+                                <Text
+                                    style={styles.errorText}
+                                    accessibilityRole="alert"
+                                >
+                                    {validationError}
+                                </Text>
+                            ) : null}
+
                             {/* Create Account */}
                             <Pressable
-                                onPress={() => {
-                                    // Registration will be connected in the next step.
-                                }}
+                                onPress={handleCreateAccount}
                                 accessibilityRole="button"
                                 accessibilityLabel="Create ZELO account"
-                                style={styles.primaryButton}
+                                style={({ pressed }) => [
+                                    styles.primaryButton,
+                                    pressed && styles.buttonPressed,
+                                ]}
                             >
                                 <LinearGradient
                                     colors={["#8B5CF6", "#6428D9"]}
