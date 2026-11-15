@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -18,6 +19,7 @@ import { colors } from "../../../theme/colors";
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { BackButton } from "../../../components/ui/BackButton";
 import { styles } from "./LoginScreen.styles";
+import { registerWithEmail } from "../../../lib/auth/auth-api";
 
 export default function RegisterScreen() {
     const router = useRouter();
@@ -29,9 +31,12 @@ export default function RegisterScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [validationError, setValidationError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [registrationError, setRegistrationError] = useState("");
 
-    const handleCreateAccount = () => {
+    const handleCreateAccount = async () => {
         setValidationError("");
+        setRegistrationError("");
 
         const normalizedEmail = email.trim();
 
@@ -69,10 +74,41 @@ export default function RegisterScreen() {
             return;
         }
 
-        Alert.alert(
-            "All Set!",
-            "Your details are valid. Account creation will be connected in the next step.",
-        );
+        // Prevent duplicate submissions
+        if (isSubmitting) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            await registerWithEmail({
+                email: normalizedEmail,
+                password,
+            });
+
+            Alert.alert(
+                "Account Created!",
+                "Your ZELO account has been created successfully. Please sign in to continue.",
+                [
+                    {
+                        text: "Sign In",
+                        onPress: () => router.replace("/login"),
+                    },
+                ],
+                {
+                    cancelable: false,
+                },
+            );
+        } catch (error: unknown) {
+            setRegistrationError(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to create your account. Please try again.",
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const showComingSoon = () => {
@@ -134,6 +170,7 @@ export default function RegisterScreen() {
                                     onChangeText={(value) => {
                                         setEmail(value);
                                         setValidationError("");
+                                        setRegistrationError("");
                                     }}
                                     placeholder="you@example.com"
                                     placeholderTextColor={colors.inputPlaceholder}
@@ -144,6 +181,7 @@ export default function RegisterScreen() {
                                     textContentType="emailAddress"
                                     accessibilityLabel="Email address"
                                     returnKeyType="next"
+                                    editable={!isSubmitting}
                                 />
                             </View>
 
@@ -159,6 +197,7 @@ export default function RegisterScreen() {
                                     onChangeText={(value) => {
                                         setPassword(value);
                                         setValidationError("");
+                                        setRegistrationError("");
                                     }}
                                     placeholder="Create a password"
                                     placeholderTextColor={colors.inputPlaceholder}
@@ -169,6 +208,7 @@ export default function RegisterScreen() {
                                     textContentType="newPassword"
                                     accessibilityLabel="Password"
                                     returnKeyType="next"
+                                    editable={!isSubmitting}
                                 />
 
                                 <Pressable
@@ -176,6 +216,7 @@ export default function RegisterScreen() {
                                     onPress={() => {
                                         setShowPassword((visible) => !visible);
                                     }}
+                                    disabled={isSubmitting}
                                     accessibilityRole="button"
                                     accessibilityLabel={
                                         showPassword
@@ -201,6 +242,7 @@ export default function RegisterScreen() {
                                     onChangeText={(value) => {
                                         setConfirmPassword(value);
                                         setValidationError("");
+                                        setRegistrationError("");
                                     }}
                                     placeholder="Enter password again"
                                     placeholderTextColor={colors.inputPlaceholder}
@@ -211,6 +253,7 @@ export default function RegisterScreen() {
                                     textContentType="newPassword"
                                     accessibilityLabel="Confirm password"
                                     returnKeyType="done"
+                                    editable={!isSubmitting}
                                 />
 
                                 <Pressable
@@ -220,6 +263,7 @@ export default function RegisterScreen() {
                                             (visible) => !visible,
                                         );
                                     }}
+                                    disabled={isSubmitting}
                                     accessibilityRole="button"
                                     accessibilityLabel={
                                         showConfirmPassword
@@ -242,14 +286,29 @@ export default function RegisterScreen() {
                                 </Text>
                             ) : null}
 
+                            {registrationError ? (
+                                <Text
+                                    style={styles.errorText}
+                                    accessibilityRole="alert"
+                                >
+                                    {registrationError}
+                                </Text>
+                            ) : null}
+
                             {/* Create Account */}
                             <Pressable
-                                onPress={handleCreateAccount}
+                                onPress={() => void handleCreateAccount()}
+                                disabled={isSubmitting}
                                 accessibilityRole="button"
                                 accessibilityLabel="Create ZELO account"
+                                accessibilityState={{
+                                    disabled: isSubmitting,
+                                    busy: isSubmitting,
+                                }}
                                 style={({ pressed }) => [
                                     styles.primaryButton,
-                                    pressed && styles.buttonPressed,
+                                    pressed && !isSubmitting && styles.buttonPressed,
+                                    isSubmitting && styles.disabledButton,
                                 ]}
                             >
                                 <LinearGradient
@@ -258,13 +317,22 @@ export default function RegisterScreen() {
                                     end={{ x: 1, y: 1 }}
                                     style={styles.gradientPrimaryButton}
                                 >
-                                    <Text style={styles.primaryButtonText}>
-                                        Create Account
-                                    </Text>
+                                    {isSubmitting ? (
+                                        <ActivityIndicator
+                                            size="small"
+                                            color={colors.white}
+                                        />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.primaryButtonText}>
+                                                Create Account
+                                            </Text>
 
-                                    <Text style={styles.buttonArrow}>
-                                        →
-                                    </Text>
+                                            <Text style={styles.buttonArrow}>
+                                                →
+                                            </Text>
+                                        </>
+                                    )}
                                 </LinearGradient>
                             </Pressable>
 
