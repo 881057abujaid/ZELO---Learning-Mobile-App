@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -13,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { colors } from "../../../theme/colors";
+import { ApiError } from "../../../lib/api/api-error";
+import { useAuth } from "../../../lib/auth/auth-context";
 
 import { styles } from "./UsernameScreen.styles";
 
@@ -22,9 +25,13 @@ const MAX_USERNAME_LENGTH = 20;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 export default function UsernameScreen() {
+    const { updateProfile } = useAuth();
+
     const [username, setUsername] = useState("");
     const [isFocused, setIsFocused] = useState(false);
     const [validationError, setValidationError] = useState("");
+    const [apiError, setApiError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validateUsername = (
         value: string,
@@ -56,7 +63,11 @@ export default function UsernameScreen() {
         return "";
     };
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
+        if (isSubmitting) {
+            return;
+        }
+
         const error = validateUsername(username);
 
         setValidationError(error);
@@ -65,8 +76,38 @@ export default function UsernameScreen() {
             return;
         }
 
-        // API integration will be added in the next milestone.
-        console.log("Valid username:", username.trim());
+        setApiError("");
+        setIsSubmitting(true);
+
+        try {
+            await updateProfile({
+                username: username.trim(),
+            });
+
+            console.log("Username saved successfully.");
+        } catch (error) {
+            if (
+                error instanceof ApiError &&
+                error.code === "USERNAME_TAKEN"
+            ) {
+                setApiError(
+                    "This username is already in use. Please choose another one.",
+                );
+            } else if (
+                error instanceof ApiError &&
+                error.status === 400
+            ) {
+                setApiError(
+                    "Please check your username and try again.",
+                );
+            } else {
+                setApiError(
+                    "Unable to save your username. Please check your connection and try again.",
+                );
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleUsernameChange = (value: string) => {
@@ -75,7 +116,15 @@ export default function UsernameScreen() {
         if (validationError) {
             setValidationError("");
         }
+
+        if (apiError) {
+            setApiError("");
+        }
     };
+
+    const hasError = Boolean(
+        validationError || apiError,
+    );
 
     return (
         <SafeAreaView
@@ -128,7 +177,7 @@ export default function UsernameScreen() {
                                     styles.inputContainer,
                                     isFocused &&
                                     styles.inputContainerFocused,
-                                    validationError &&
+                                    hasError &&
                                     styles.inputContainerError,
                                 ]}
                             >
@@ -151,6 +200,7 @@ export default function UsernameScreen() {
                                     maxLength={MAX_USERNAME_LENGTH}
                                     keyboardType="default"
                                     returnKeyType="done"
+                                    editable={!isSubmitting}
                                     onSubmitEditing={
                                         handleContinue
                                     }
@@ -193,26 +243,48 @@ export default function UsernameScreen() {
                                 </Text>
                             ) : null}
 
+                            {/* API Error */}
+                            {apiError ? (
+                                <Text
+                                    style={styles.errorText}
+                                    accessibilityRole="alert"
+                                >
+                                    {apiError}
+                                </Text>
+                            ) : null}
+
                             {/* Continue Button */}
                             <Pressable
                                 onPress={handleContinue}
+                                disabled={isSubmitting}
                                 accessibilityRole="button"
                                 accessibilityLabel="Continue"
                                 style={({ pressed }) => [
                                     styles.primaryButton,
                                     pressed &&
+                                    !isSubmitting &&
                                     styles.buttonPressed,
                                 ]}
                             >
-                                <Text
-                                    style={styles.primaryButtonText}
-                                >
-                                    Continue
-                                </Text>
+                                {isSubmitting ? (
+                                    <ActivityIndicator
+                                        color="#FFFFFF"
+                                    />
+                                ) : (
+                                    <>
+                                        <Text
+                                            style={styles.primaryButtonText}
+                                        >
+                                            Continue
+                                        </Text>
 
-                                <Text style={styles.buttonArrow}>
-                                    →
-                                </Text>
+                                        <Text
+                                            style={styles.buttonArrow}
+                                        >
+                                            →
+                                        </Text>
+                                    </>
+                                )}
                             </Pressable>
                         </View>
 
