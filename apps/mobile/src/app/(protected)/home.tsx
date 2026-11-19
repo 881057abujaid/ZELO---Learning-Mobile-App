@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
-
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useAuth } from "../../lib/auth/auth-context";
 
 export default function ProtectedHomeScreen() {
+    const router = useRouter();
     const { state } = useAuth();
 
     if (state.status !== "authenticated") {
@@ -30,6 +31,12 @@ export default function ProtectedHomeScreen() {
             <Text style={styles.description}>
                 Your authenticated learning space is ready.
             </Text>
+
+            <Pressable
+                onPress={() => router.push("/username")}
+            >
+                <Text>Select Username</Text>
+            </Pressable>
         </View>
     );
 }
