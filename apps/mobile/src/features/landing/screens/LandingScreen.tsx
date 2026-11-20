@@ -12,6 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useAuth } from "../../../lib/auth/auth-context";
+import { getOnboardingRoute } from "../../../lib/auth/onboarding-navigation";
+
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { Button } from "../../../components/ui/Button";
 
@@ -54,7 +56,11 @@ export default function LandingScreen() {
     }
 
     if (state.status === "authenticated") {
-        return <Redirect href="/home" />;
+        return (
+            <Redirect
+                href={getOnboardingRoute(state.profile)}
+            />
+        );
     }
 
     return (

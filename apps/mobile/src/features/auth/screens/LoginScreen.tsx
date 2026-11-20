@@ -16,6 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 
 import { useAuth } from "../../../lib/auth/auth-context";
+import { getOnboardingRoute } from "../../../lib/auth/onboarding-navigation";
+
 import { colors } from "../../../theme/colors";
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { BackButton } from "../../../components/ui/BackButton";
@@ -86,7 +88,11 @@ export default function LoginScreen() {
     };
 
     if (state.status === "authenticated") {
-        return <Redirect href="/home" />;
+        return (
+            <Redirect
+                href={getOnboardingRoute(state.profile)}
+            />
+        );
     }
 
     if (state.status === "loading" && !isSubmitting) {
