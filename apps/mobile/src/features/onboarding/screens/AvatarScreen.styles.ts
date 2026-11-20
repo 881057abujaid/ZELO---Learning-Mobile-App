@@ -121,6 +121,14 @@ export const styles = StyleSheet.create({
         marginTop: spacing.sm,
     },
 
+    errorMessage: {
+        marginTop: spacing.sm,
+        color: colors.error,
+        fontFamily: typography.family.bodyMedium,
+        fontSize: typography.size.sm,
+        textAlign: "center",
+    },
+
     selectionText: {
         color: colors.textSecondary,
         fontFamily: typography.family.bodyMedium,
@@ -160,17 +168,5 @@ export const styles = StyleSheet.create({
     buttonPressed: {
         opacity: 0.85,
         transform: [{ scale: 0.98 }],
-    },
-
-    skipButton: {
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: spacing.lg,
-    },
-
-    skipButtonText: {
-        color: colors.textMuted,
-        fontFamily: typography.family.bodyBold,
-        fontSize: typography.size.sm,
     },
 });

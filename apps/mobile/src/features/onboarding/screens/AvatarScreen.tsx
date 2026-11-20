@@ -9,11 +9,14 @@ import {
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { colors } from "../../../theme/colors";
 
 import { styles } from "./AvatarScreen.styles";
+
+import { useAuth } from "../../../lib/auth/auth-context";
 
 type AvatarOption = {
     key: string;
@@ -83,19 +86,40 @@ const AVATARS: AvatarOption[] = [
 ];
 
 export default function AvatarScreen() {
+    const router = useRouter();
+
+    const { updateProfile } = useAuth();
+
     const [selectedAvatar, setSelectedAvatar] =
         useState<string | null>(null);
 
-    const handleContinue = () => {
-        if (!selectedAvatar) {
+    const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleContinue = async () => {
+        if (!selectedAvatar || isSaving) {
             return;
         }
 
-        console.log("Selected avatar:", selectedAvatar);
-    };
+        setIsSaving(true);
+        setErrorMessage(null);
 
-    const handleSkip = () => {
-        console.log("Avatar selection skipped.");
+        try {
+            await updateProfile({
+                avatarKey: selectedAvatar,
+            });
+
+            router.replace("/home");
+        } catch (error: unknown) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : "Unable to save your avatar. Please try again.";
+
+            setErrorMessage(message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -214,40 +238,37 @@ export default function AvatarScreen() {
                         )}
                     </View>
 
+                    {errorMessage && (
+                        <Text style={styles.errorMessage}>
+                            {errorMessage}
+                        </Text>
+                    )}
+
                     {/* Continue Button */}
                     <Pressable
                         onPress={handleContinue}
-                        disabled={!selectedAvatar}
+                        disabled={!selectedAvatar || isSaving}
                         accessibilityRole="button"
                         accessibilityLabel="Continue"
                         style={({ pressed }) => [
                             styles.primaryButton,
-                            !selectedAvatar &&
+                            (!selectedAvatar || isSaving) &&
                             styles.primaryButtonDisabled,
                             pressed &&
                             selectedAvatar &&
+                            !isSaving &&
                             styles.buttonPressed,
                         ]}
                     >
                         <Text style={styles.primaryButtonText}>
-                            Continue
+                            {isSaving ? "Saving..." : "Continue"}
                         </Text>
 
-                        <Text style={styles.buttonArrow}>
-                            →
-                        </Text>
-                    </Pressable>
-
-                    {/* Skip */}
-                    <Pressable
-                        onPress={handleSkip}
-                        accessibilityRole="button"
-                        accessibilityLabel="Skip avatar selection"
-                        style={styles.skipButton}
-                    >
-                        <Text style={styles.skipButtonText}>
-                            Skip for now
-                        </Text>
+                        {!isSaving && (
+                            <Text style={styles.buttonArrow}>
+                                →
+                            </Text>
+                        )}
                     </Pressable>
                 </View>
             </ScrollView>
