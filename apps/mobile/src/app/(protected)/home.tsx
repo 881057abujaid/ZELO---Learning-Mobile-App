@@ -33,9 +33,9 @@ export default function ProtectedHomeScreen() {
             </Text>
 
             <Pressable
-                onPress={() => router.push("/username")}
+                onPress={() => router.push("/avatar")}
             >
-                <Text>Select Username</Text>
+                <Text>Select Avatar</Text>
             </Pressable>
         </View>
     );
