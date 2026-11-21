@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { colors } from "../../../theme/colors";
@@ -26,6 +27,8 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 export default function UsernameScreen() {
     const { updateProfile } = useAuth();
+
+    const router = useRouter();
 
     const [username, setUsername] = useState("");
     const [isFocused, setIsFocused] = useState(false);
@@ -84,7 +87,7 @@ export default function UsernameScreen() {
                 username: username.trim(),
             });
 
-            console.log("Username saved successfully.");
+            router.replace("/avatar");
         } catch (error) {
             if (
                 error instanceof ApiError &&
