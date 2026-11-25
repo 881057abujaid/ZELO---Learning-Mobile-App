@@ -8,25 +8,11 @@ import {
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
-import { useAuth } from "../../../lib/auth/auth-context";
 import { colors } from "../../../theme";
-import { BrandLogo } from "../../../components/branding/BrandLogo";
 import { homeStyles as styles } from "./HomeScreen.styles";
-
-// Avatar Images mapping
-const avatarImages: Record<string, any> = {
-    girl_01: require("../../../../assets/avatars/luna.png"),
-    girl_02: require("../../../../assets/avatars/mia.png"),
-    girl_03: require("../../../../assets/avatars/ava.png"),
-    girl_04: require("../../../../assets/avatars/zara.png"),
-    boy_01: require("../../../../assets/avatars/leo.png"),
-    boy_02: require("../../../../assets/avatars/max.png"),
-    boy_03: require("../../../../assets/avatars/kai.png"),
-    boy_04: require("../../../../assets/avatars/aren.png"),
-};
+import { AppHeader } from "../../../components/navigation/AppHeader";
 
 const statIcons = {
     streak: require("../../../../assets/icons/streak-flame.png"),
@@ -37,20 +23,6 @@ const statIcons = {
 
 export default function HomeScreen() {
     const router = useRouter();
-    const { state } = useAuth();
-
-    if (state.status !== "authenticated") {
-        return null;
-    }
-
-    const profile = state.profile.profile;
-
-    const username =
-        profile.username ||
-        state.profile.email.split("@")[0];
-
-    const initial = username.charAt(0).toUpperCase();
-    const avatarKey = profile.avatarKey;
 
     return (
         <SafeAreaView
@@ -63,43 +35,10 @@ export default function HomeScreen() {
                     contentContainerStyle={styles.scrollContent}
                 >
                     {/* HEADER */}
-                    <View style={styles.header}>
-                        <View style={styles.brandContainer}>
-                            <BrandLogo
-                                variant="tagline"
-                                width={140}
-                            />
-                        </View>
-
-                        <View style={styles.headerActions}>
-                            <Pressable
-                                style={styles.headerIconButton}
-                                accessibilityLabel="Notifications"
-                            >
-                                <Ionicons
-                                    name="notifications-outline"
-                                    size={23}
-                                    color={colors.textPrimary}
-                                />
-
-                                <View style={styles.notificationDot} />
-                            </Pressable>
-
-                            <View style={styles.avatar}>
-                                {avatarKey && avatarImages[avatarKey] ? (
-                                    <Image
-                                        source={avatarImages[avatarKey]}
-                                        style={styles.avatarImage}
-                                        resizeMode="contain"
-                                    />
-                                ) : (
-                                    <Text style={styles.avatarText}>
-                                        {initial}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
-                    </View>
+                    <AppHeader
+                        showNotifications
+                        showProfile
+                    />
 
                     {/* GAMIFICATION SUMMARY */}
                     <View style={styles.statsCard}>
@@ -256,11 +195,12 @@ export default function HomeScreen() {
                             />
 
                             <QuickAction
-                                icon="compass"
-                                color="#5594FF"
-                                background="#E6F0FF"
-                                title="Explore"
-                                subtitle="Learning paths"
+                                icon="compass-outline"
+                                color={colors.primary}
+                                background={colors.primarySoft}
+                                title="Explore Worlds"
+                                subtitle="Discover your path"
+                                onPress={() => router.push("/explore")}
                             />
                         </View>
                     </View>
@@ -321,6 +261,7 @@ export default function HomeScreen() {
                     <BottomNavItem
                         icon="compass-outline"
                         label="Explore"
+                        onPress={() => router.push("/explore")}
                     />
 
                     <BottomNavItem
@@ -354,6 +295,7 @@ interface QuickActionProps {
     background: string;
     title: string;
     subtitle: string;
+    onPress?: () => void;
 }
 
 function QuickAction({
@@ -362,11 +304,13 @@ function QuickAction({
     background,
     title,
     subtitle,
+    onPress,
 }: QuickActionProps) {
     return (
         <Pressable
             style={styles.quickActionCard}
-            disabled
+            onPress={onPress}
+            disabled={!onPress}
         >
             <View
                 style={[
