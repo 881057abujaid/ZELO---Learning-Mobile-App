@@ -9,32 +9,23 @@ export const exploreStyles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
-
     container: {
         flex: 1,
         backgroundColor: colors.background,
     },
-
     scrollContent: {
         paddingHorizontal: 18,
         paddingBottom: 24,
     },
-
-    /* =========================
-       TITLE
-    ========================= */
-
     titleSection: {
-        marginBottom: 22,
+        marginBottom: 20,
     },
-
     pageTitle: {
         fontFamily: typography.family.display,
         fontSize: 43,
         lineHeight: 50,
         color: colors.textPrimary,
     },
-
     pageSubtitle: {
         fontFamily: typography.family.body,
         fontSize: 18,
@@ -42,172 +33,136 @@ export const exploreStyles = StyleSheet.create({
         color: colors.textSecondary,
         marginTop: 3,
     },
-
-    /* =========================
-       WORLD LIST
-    ========================= */
-
     worldList: {
-        gap: 16,
+        gap: 14,
     },
-
-    /* =========================
-       WORLD CARD
-    ========================= */
-
     worldCard: {
-        minHeight: 205,
+        height: 176,
         borderRadius: radius.xl,
-        padding: 13,
+        padding: 10,
 
         flexDirection: "row",
         alignItems: "center",
 
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.7)",
+        borderColor: "rgba(255,255,255,0.9)",
+
+        shadowColor: "#31245A",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.045,
+        shadowRadius: 8,
+        elevation: 2,
+
+        overflow: "hidden",
     },
-
     worldIllustration: {
-        width: 112,
-        height: 150,
+        width: 108,
+        height: 154,
         borderRadius: radius.lg,
-
-        alignItems: "center",
-        justifyContent: "center",
 
         position: "relative",
         overflow: "hidden",
-    },
 
+        backgroundColor: "rgba(255,255,255,0.55)",
+        flexShrink: 0,
+    },
+    worldImage: {
+        width: "100%",
+        height: "100%",
+    },
     worldNumberBadge: {
         position: "absolute",
-        top: 8,
-        left: 8,
-
+        top: 7,
+        left: 7,
         width: 25,
         height: 25,
         borderRadius: radius.full,
-
         alignItems: "center",
         justifyContent: "center",
+        borderWidth: 1.5,
+        borderColor: "rgba(255,255,255,0.85)",
     },
-
     worldNumberText: {
         fontFamily: typography.family.bodyExtraBold,
         fontSize: 12,
         color: colors.white,
     },
-
-    /* =========================
-       WORLD CONTENT
-    ========================= */
-
     worldContent: {
         flex: 1,
-        marginLeft: 12,
+        marginLeft: 11,
         justifyContent: "center",
         minWidth: 0,
     },
-
     worldEyebrow: {
         fontFamily: typography.family.bodyExtraBold,
-        fontSize: 12,
-        letterSpacing: 0.4,
+        fontSize: 10,
+        letterSpacing: 0.35,
         marginBottom: 4,
     },
-
     worldTitle: {
         fontFamily: typography.family.heading,
-        fontSize: 17,
-        lineHeight: 22,
+        fontSize: 16,
+        lineHeight: 21,
         color: colors.textPrimary,
     },
-
     worldDescription: {
         fontFamily: typography.family.body,
-        fontSize: 12,
-        lineHeight: 17,
+        fontSize: 11,
+        lineHeight: 15,
         color: colors.textSecondary,
-        marginTop: 5,
+        marginTop: 4,
     },
-
-    /* =========================
-       PROGRESS
-    ========================= */
-
     progressSection: {
-        marginTop: 12,
+        marginTop: 10,
     },
-
     progressTrack: {
-        height: 8,
+        height: 6,
         width: "100%",
         borderRadius: radius.full,
         backgroundColor: "rgba(100,90,150,0.12)",
         overflow: "hidden",
     },
-
     progressFill: {
         height: "100%",
         borderRadius: radius.full,
     },
-
     progressLabel: {
         fontFamily: typography.family.bodyMedium,
-        fontSize: 10,
-        color: colors.textSecondary,
-        marginTop: 5,
-    },
-
-    /* =========================
-       RIGHT SECTION
-    ========================= */
-
-    worldRightSection: {
-        width: 34,
-        height: "100%",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginLeft: 5,
-    },
-
-    statusBadge: {
-        position: "absolute",
-        top: 0,
-        right: -2,
-
-        paddingHorizontal: 9,
-        paddingVertical: 6,
-
-        borderRadius: radius.full,
-        backgroundColor: "rgba(255,255,255,0.65)",
-    },
-
-    statusText: {
-        fontFamily: typography.family.bodyBold,
         fontSize: 9,
         color: colors.textSecondary,
+        marginTop: 4,
     },
-
+    worldRightSection: {
+        width: 30,
+        alignSelf: "stretch",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        marginLeft: 4,
+    },
     recommendedBadge: {
+        position: "absolute",
+        top: 1,
+        right: -1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 3,
+        paddingHorizontal: 6,
+        paddingVertical: 5,
+        borderRadius: radius.full,
         backgroundColor: "#FFE8BD",
     },
-
     recommendedText: {
-        color: "#D97706",
+        fontFamily: typography.family.bodyBold,
+        fontSize: 8,
+        color: "#B66A00",
     },
-
     arrowButton: {
-        width: 35,
-        height: 35,
+        width: 30,
+        height: 30,
         borderRadius: radius.full,
-        backgroundColor: "rgba(255,255,255,0.7)",
-
+        backgroundColor: "rgba(255,255,255,0.8)",
         alignItems: "center",
         justifyContent: "center",
-
-        position: "absolute",
-        bottom: 4,
-        right: -2,
+        marginBottom: 1,
     },
 });
