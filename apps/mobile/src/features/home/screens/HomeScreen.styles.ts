@@ -347,42 +347,4 @@ export const homeStyles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-
-    /* BOTTOM NAV */
-
-    bottomNavigation: {
-        minHeight: 64,
-        backgroundColor: colors.surface,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-around",
-        paddingHorizontal: 5,
-        paddingTop: 5,
-    },
-
-    bottomNavItem: {
-        flex: 1,
-        height: 55,
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 3,
-        borderRadius: radius.lg,
-    },
-
-    bottomNavItemActive: {
-        backgroundColor: colors.primarySoft,
-    },
-
-    bottomNavLabel: {
-        fontFamily: typography.family.bodyMedium,
-        fontSize: 10,
-        color: colors.textSecondary,
-    },
-
-    bottomNavLabelActive: {
-        color: colors.primary,
-        fontFamily: typography.family.bodyBold,
-    },
 });

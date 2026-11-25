@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { colors } from "../../../theme";
 import { homeStyles as styles } from "./HomeScreen.styles";
 import { AppHeader } from "../../../components/navigation/AppHeader";
+import { BottomNavigation } from "../../../components/navigation/BottomNavigation";
 
 const statIcons = {
     streak: require("../../../../assets/icons/streak-flame.png"),
@@ -251,35 +252,7 @@ export default function HomeScreen() {
                 </ScrollView>
 
                 {/* BOTTOM NAVIGATION */}
-                <View style={styles.bottomNavigation}>
-                    <BottomNavItem
-                        icon="home"
-                        label="Home"
-                        active
-                    />
-
-                    <BottomNavItem
-                        icon="compass-outline"
-                        label="Explore"
-                        onPress={() => router.push("/explore")}
-                    />
-
-                    <BottomNavItem
-                        icon="code-slash"
-                        label="Code"
-                    />
-
-                    <BottomNavItem
-                        icon="trophy-outline"
-                        label="Quests"
-                    />
-
-                    <BottomNavItem
-                        icon="person-outline"
-                        label="Profile"
-                        onPress={() => router.push("/avatar")}
-                    />
-                </View>
+                <BottomNavigation activeTab="home" />
             </View>
         </SafeAreaView>
     );
@@ -404,54 +377,6 @@ function RecommendationCard({
                     color={colors.primary}
                 />
             </View>
-        </Pressable>
-    );
-}
-
-/* =========================================
-   BOTTOM NAVIGATION COMPONENT
-========================================= */
-
-interface BottomNavItemProps {
-    icon: keyof typeof Ionicons.glyphMap;
-    label: string;
-    active?: boolean;
-    onPress?: () => void;
-}
-
-function BottomNavItem({
-    icon,
-    label,
-    active = false,
-    onPress,
-}: BottomNavItemProps) {
-    return (
-        <Pressable
-            style={[
-                styles.bottomNavItem,
-                active && styles.bottomNavItemActive,
-            ]}
-            onPress={onPress}
-            disabled={!onPress && !active}
-        >
-            <Ionicons
-                name={icon}
-                size={25}
-                color={
-                    active
-                        ? colors.primary
-                        : colors.textSecondary
-                }
-            />
-
-            <Text
-                style={[
-                    styles.bottomNavLabel,
-                    active && styles.bottomNavLabelActive,
-                ]}
-            >
-                {label}
-            </Text>
         </Pressable>
     );
 }

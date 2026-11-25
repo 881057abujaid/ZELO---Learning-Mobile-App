@@ -13,6 +13,7 @@ import { colors } from "../../../theme";
 
 import { exploreStyles as styles } from "./ExploreScreen.styles";
 import { AppHeader } from "../../../components/navigation/AppHeader";
+import { BottomNavigation } from "../../../components/navigation/BottomNavigation";
 
 // Curriculum worlds
 const worlds = [
@@ -109,35 +110,7 @@ export default function ExploreScreen() {
                 </ScrollView>
 
                 {/* BOTTOM NAVIGATION */}
-                <View style={styles.bottomNavigation}>
-                    <BottomNavItem
-                        icon="home"
-                        label="Home"
-                        onPress={() => router.replace("/home")}
-                    />
-
-                    <BottomNavItem
-                        icon="compass"
-                        label="Explore"
-                        active
-                    />
-
-                    <BottomNavItem
-                        icon="code-slash"
-                        label="Code"
-                    />
-
-                    <BottomNavItem
-                        icon="trophy-outline"
-                        label="Quests"
-                    />
-
-                    <BottomNavItem
-                        icon="person-outline"
-                        label="Profile"
-                        onPress={() => router.push("/avatar")}
-                    />
-                </View>
+                <BottomNavigation activeTab="explore" />
             </View>
         </SafeAreaView>
     );
@@ -266,54 +239,6 @@ function WorldCard({ world }: WorldCardProps) {
                     />
                 </View>
             </View>
-        </Pressable>
-    );
-}
-
-// =========================================
-// BOTTOM NAVIGATION
-// =========================================
-
-interface BottomNavItemProps {
-    icon: keyof typeof Ionicons.glyphMap;
-    label: string;
-    active?: boolean;
-    onPress?: () => void;
-}
-
-function BottomNavItem({
-    icon,
-    label,
-    active = false,
-    onPress,
-}: BottomNavItemProps) {
-    return (
-        <Pressable
-            style={[
-                styles.bottomNavItem,
-                active && styles.bottomNavItemActive,
-            ]}
-            onPress={onPress}
-            disabled={!onPress && !active}
-        >
-            <Ionicons
-                name={icon}
-                size={25}
-                color={
-                    active
-                        ? colors.primary
-                        : colors.textSecondary
-                }
-            />
-
-            <Text
-                style={[
-                    styles.bottomNavLabel,
-                    active && styles.bottomNavLabelActive,
-                ]}
-            >
-                {label}
-            </Text>
         </Pressable>
     );
 }
