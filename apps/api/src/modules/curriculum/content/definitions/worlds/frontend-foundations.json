@@ -1,0 +1,10 @@
+{
+    "id": "world-frontend-foundations",
+    "slug": "frontend-foundations",
+    "title": "Frontend Foundations",
+    "description": "Learn the fundamentals of HTML and understand how websites are structured and built.",
+    "order": 1,
+    "imageRef": "worlds/frontend-foundations",
+    "status": "published",
+    "prerequisiteWorldIds": []
+}
