@@ -1,0 +1,8 @@
+{
+    "id": "module-understanding-the-web",
+    "worldId": "world-frontend-foundations",
+    "title": "Understanding the Web",
+    "description": "Learn what websites are, how HTML, CSS, and JavaScript work together, how browsers display web pages, and understand HTML tags, elements, and attributes.",
+    "order": 1,
+    "status": "draft"
+}

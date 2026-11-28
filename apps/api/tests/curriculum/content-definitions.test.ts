@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 
 import { curriculumSchema } from "../../src/modules/curriculum/content/curriculum.schema";
 import { worldSchema } from "../../src/modules/curriculum/content/world.schema";
+import { moduleSchema } from "../../src/modules/curriculum/content/module.schema";
+
 import {
     validateCurriculumIntegrity,
 } from "../../src/modules/curriculum/content/curriculum.integrity.validator";
@@ -25,6 +27,16 @@ const frontendFoundationsWorld = JSON.parse(
         resolve(
             definitionsDirectory,
             "worlds/frontend-foundations.json",
+        ),
+        "utf-8",
+    ),
+);
+
+const understandingTheWebModule = JSON.parse(
+    readFileSync(
+        resolve(
+            definitionsDirectory,
+            "modules/understanding-the-web.json",
         ),
         "utf-8",
     ),
@@ -71,12 +83,42 @@ describe("Initial Curriculum Content Definitions", () => {
         });
     });
 
+    describe("Understanding the Web Module Definition", () => {
+        it("should contain valid module data", () => {
+            const result = moduleSchema.safeParse(
+                understandingTheWebModule,
+            );
+
+            expect(result.success).toBe(true);
+        });
+
+        it("should use the expected module ID", () => {
+            expect(understandingTheWebModule.id).toBe(
+                "module-understanding-the-web",
+            );
+        });
+
+        it("should belong to Frontend Foundations World", () => {
+            expect(understandingTheWebModule.worldId).toBe(
+                "world-frontend-foundations",
+            );
+        });
+
+        it("should be the first module in its world", () => {
+            expect(understandingTheWebModule.order).toBe(1);
+        });
+
+        it("should remain in draft status", () => {
+            expect(understandingTheWebModule.status).toBe("draft");
+        });
+    });
+
     describe("Curriculum Integrity", () => {
         it("should pass curriculum integrity validation", () => {
             const result = validateCurriculumIntegrity({
                 curriculum: curriculumDefinition,
                 worlds: [frontendFoundationsWorld],
-                modules: [],
+                modules: [understandingTheWebModule],
                 lessons: [],
             });
 
