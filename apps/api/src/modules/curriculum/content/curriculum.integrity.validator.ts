@@ -324,14 +324,33 @@ export function validateCurriculumIntegrity(
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | 9. Lesson ordering within modules
-    |--------------------------------------------------------------------------
-    |
-    | Lesson order is not yet defined in the current Lesson schema.
-    | Therefore, lesson ordering validation is intentionally omitted.
-    |
-    */
+|--------------------------------------------------------------------------
+| 9. Lesson ordering within modules
+|--------------------------------------------------------------------------
+*/
+
+    const lessonOrdersByModule = new Map<string, Set<number>>();
+
+    for (const lesson of lessons) {
+        const existingOrders =
+            lessonOrdersByModule.get(lesson.moduleId) ?? new Set<number>();
+
+        if (existingOrders.has(lesson.order)) {
+            issues.push({
+                code: "DUPLICATE_LESSON_ORDER",
+                message:
+                    `Duplicate lesson order "${lesson.order}" in module "${lesson.moduleId}".`,
+                entityId: lesson.id,
+            });
+        }
+
+        existingOrders.add(lesson.order);
+
+        lessonOrdersByModule.set(
+            lesson.moduleId,
+            existingOrders,
+        );
+    }
 
     return {
         valid: issues.length === 0,

@@ -6,6 +6,7 @@ const validLesson = {
     slug: "introduction-to-html",
     title: "Introduction to HTML",
     summary: "Learn the basics of HTML.",
+    order: 1,
     worldId: "html-world",
     moduleId: "html-module-001",
     contentVersion: "1.0.0",
@@ -276,6 +277,24 @@ describe("lessonSchema", () => {
         const result = lessonSchema.safeParse({
             ...validLesson,
             unexpectedField: "This should not be allowed",
+        });
+
+        expect(result.success).toBe(false);
+    });
+
+    it("accepts a positive integer lesson order", () => {
+        const result = lessonSchema.safeParse({
+            ...validLesson,
+            order: 2,
+        });
+
+        expect(result.success).toBe(true);
+    });
+
+    it("rejects an invalid lesson order", () => {
+        const result = lessonSchema.safeParse({
+            ...validLesson,
+            order: 0,
         });
 
         expect(result.success).toBe(false);

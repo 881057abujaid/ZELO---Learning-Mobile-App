@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { validateCurriculumIntegrity } from "../../src/modules/curriculum/content/curriculum.integrity.validator";
 
 import type { Curriculum } from "../../src/modules/curriculum/content/curriculum.schema";
-import type { World } from "../../src/modules/curriculum/content/World.schema";
+import type { World } from "../../src/modules/curriculum/content/world.schema";
 import type { CurriculumModule } from "../../src/modules/curriculum/content/module.schema";
 import type { Lesson } from "../../src/modules/curriculum/content/lesson.schema";
 
@@ -43,6 +43,7 @@ const validLessons: Lesson[] = [
         slug: "html-introduction",
         title: "HTML Introduction",
         summary: "Introduction to HTML.",
+        order: 1,
         worldId: "world-html",
         moduleId: "module-html-basics",
         contentVersion: "1.0.0",
@@ -76,12 +77,12 @@ const validLessons: Lesson[] = [
 ];
 
 function createValidContent() {
-    return {
+    return structuredClone({
         curriculum: validCurriculum,
-        worlds: [...validWorlds],
-        modules: [...validModules],
-        lessons: [...validLessons],
-    };
+        worlds: validWorlds,
+        modules: validModules,
+        lessons: validLessons,
+    });
 }
 
 describe("Curriculum Integrity Validator", () => {
@@ -401,6 +402,55 @@ describe("Curriculum Integrity Validator", () => {
                     code: "LESSON_MODULE_WORLD_MISMATCH",
                 }),
             );
+        });
+    });
+
+    describe("Lesson Ordering", () => {
+        it("should detect duplicate lesson orders within the same module", () => {
+            const content = createValidContent();
+
+            content.lessons.push({
+                ...validLessons[0],
+                id: "lesson-html-second",
+                slug: "html-second",
+                order: 1,
+            });
+
+            const result = validateCurriculumIntegrity(content);
+
+            expect(result.valid).toBe(false);
+
+            expect(result.issues).toContainEqual(
+                expect.objectContaining({
+                    code: "DUPLICATE_LESSON_ORDER",
+                }),
+            );
+        });
+
+        it("should allow the same lesson order in different modules", () => {
+            const content = createValidContent();
+
+            content.modules.push({
+                id: "module-html-advanced",
+                worldId: "world-html",
+                title: "HTML Advanced",
+                description: "Advanced HTML topics.",
+                order: 2,
+                status: "published",
+            });
+
+            content.lessons.push({
+                ...validLessons[0],
+                id: "lesson-html-advanced",
+                slug: "html-advanced",
+                moduleId: "module-html-advanced",
+                order: 1,
+            });
+
+            const result = validateCurriculumIntegrity(content);
+
+            expect(result.valid).toBe(true);
+            expect(result.issues).toHaveLength(0);
         });
     });
 

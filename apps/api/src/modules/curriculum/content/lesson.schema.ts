@@ -435,6 +435,10 @@ export const lessonSchema = z.object({
     slug: slugSchema,
     title: z.string().min(1),
     summary: z.string().min(1),
+    order: z
+        .number()
+        .int()
+        .positive("Lesson order must be a positive integer."),
 
     worldId: contentIdSchema,
     moduleId: contentIdSchema,

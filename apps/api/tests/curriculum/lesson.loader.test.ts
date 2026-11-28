@@ -14,6 +14,7 @@ const validLesson = {
     slug: "introduction-to-html",
     title: "Introduction to HTML",
     summary: "Learn the basics of HTML.",
+    order: 1,
     worldId: "html-world",
     moduleId: "html-module-001",
     contentVersion: "1.0.0",
